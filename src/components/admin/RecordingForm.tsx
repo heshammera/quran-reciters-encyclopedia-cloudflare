@@ -22,6 +22,11 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
+    // Content Type State
+    const [contentType, setContentType] = useState<'quran' | 'general'>(
+        (initialData && !initialData.surah_number) ? 'general' : 'quran'
+    );
+
     // Data lists
     const [reciters, setReciters] = useState<any[]>([]);
     const [sections, setSections] = useState<any[]>([]);
@@ -130,14 +135,21 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
     // Compute if form is valid for publishing (reactive)
     const isFormValid = useMemo(() => {
-        return !!(formData.reciter_id &&
+        const commonValid = !!(formData.reciter_id &&
             formData.section_id &&
             formData.city &&
             formData.time_period &&
             formData.time_period !== "" &&
             formData.duration_seconds > 0 &&
             formData.source_description);
-    }, [formData.reciter_id, formData.section_id, formData.city, formData.time_period, formData.duration_seconds, formData.source_description]);
+
+        if (contentType === 'general') {
+            return commonValid && !!formData.title;
+        } else {
+            // For Quran, title is optional, but segments are required (logic handled elsewhere usually, but here we assume segments exist)
+            return commonValid;
+        }
+    }, [formData, contentType]);
 
     const checkDuplicates = async () => {
         if (!formData.reciter_id || segments.length === 0) return false;
@@ -359,29 +371,30 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
         setValidationWarnings([]);
 
         try {
-            // 0. Validation for ALL segments
-            for (const seg of segments) {
-                const validation = await validateAyahRange(seg.surah, seg.start, seg.end);
-                if (!validation.isValid) {
-                    setError(`خطأ في السورة ${seg.surah}: ${validation.error}`);
-                    setLoading(false);
-                    return;
+            // 0. Validation for ALL segments (Skip for General)
+            if (contentType === 'quran') {
+                for (const seg of segments) {
+                    const validation = await validateAyahRange(seg.surah, seg.start, seg.end);
+                    if (!validation.isValid) {
+                        setError(`خطأ في السورة ${seg.surah}: ${validation.error}`);
+                        setLoading(false);
+                        return;
+                    }
                 }
             }
 
             // 1. Prepare payload
             // Use the FIRST segment for the main 'recordings' table (Display purposes)
+            // 1. Prepare payload
+            // Use the FIRST segment for the main 'recordings' table (Display purposes)
             const mainSegment = segments[0];
 
-            const payload: any = {
+            let payload: any = {
                 archival_id: formData.archival_id?.trim(),
                 title: formData.title?.trim(),
                 reciter_id: formData.reciter_id,
                 section_id: formData.section_id,
-                reciter_phase_id: formData.reciter_phase_id || null, // Allow null
-                surah_number: mainSegment.surah,     // Primary Surah
-                ayah_start: mainSegment.start,       // Primary Start
-                ayah_end: mainSegment.end,           // Primary End
+                reciter_phase_id: formData.reciter_phase_id || null,
                 city: formData.city,
                 recording_date: {
                     year: parseInt(formData.time_period) || null,
@@ -395,6 +408,22 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 is_published: formData.is_published,
                 is_featured: formData.is_featured,
             };
+
+            if (contentType === 'quran') {
+                payload.surah_number = mainSegment.surah;
+                payload.ayah_start = mainSegment.start;
+                payload.ayah_end = mainSegment.end;
+            } else {
+                payload.surah_number = null;
+                payload.ayah_start = null;
+                payload.ayah_end = null;
+                // Ensure Title is present for General content
+                if (!payload.title) {
+                    setError("يجب إدخال الاسم الكامل للتلاوة للتسجيلات العامة");
+                    setLoading(false);
+                    return;
+                }
+            }
 
             // Ensure archival_id is populated (Optional for user, Required for DB)
             if (!payload.archival_id) {
@@ -424,8 +453,8 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 recordingId = data.id;
             }
 
-            // 1.5 Save Segments to recording_coverage
-            if (recordingId) {
+            // 1.5 Save Segments to recording_coverage (Only for Quran)
+            if (recordingId && contentType === 'quran') {
                 // First delete existing coverage if editing (to handle updates cleanly)
                 if (initialData?.id) {
                     await supabase.from("recording_coverage").delete().eq("recording_id", recordingId);
@@ -435,20 +464,22 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 const coverageRows = segments.map(seg => ({
                     recording_id: recordingId,
                     surah_number: seg.surah,
-                    start_ayah: seg.start,
-                    end_ayah: seg.end,
-                    full_surah: false // Calculate this if needed, but not critical
+                    ayah_start: seg.start,
+                    ayah_end: seg.end
                 }));
 
-                const { error: coverageError } = await supabase
+                const { error: covError } = await supabase
                     .from("recording_coverage")
                     .insert(coverageRows);
 
-                if (coverageError) {
-                    console.error("Coverage insert error:", coverageError);
-                    // Do not block success, but log it
+                if (covError) throw covError;
+            } else if (recordingId && contentType === 'general') {
+                // If switching from Quran to General, clean up coverage
+                if (initialData?.id) {
+                    await supabase.from("recording_coverage").delete().eq("recording_id", recordingId);
                 }
             }
+
 
             // 2. Handle Media File (if URL provided)
             if (formData.archive_url && recordingId) {
@@ -545,6 +576,38 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
             {success && <div className="p-4 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">تم الحفظ بنجاح!</div>}
 
+            {success && <div className="p-4 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">تم الحفظ بنجاح!</div>}
+
+            {/* Content Type Toggle */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 mb-6 flex items-center justify-between">
+                <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white">نوع المحتوى</h3>
+                    <p className="text-sm text-slate-500">اختر نوع التسجيل لتحديد الحقول المطلوبة</p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
+                    <button
+                        type="button"
+                        onClick={() => setContentType('quran')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'quran'
+                            ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                    >
+                        تلاوة قرآنية
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setContentType('general')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'general'
+                            ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                    >
+                        تسجيل عام (ابتهال/نشيد)
+                    </button>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Relations */}
                 <div className="space-y-4">
@@ -594,92 +657,94 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 </div>
 
                 {/* Quran Content (Multi-Segment) */}
-                <div className="space-y-4">
+                {contentType === 'quran' && (
+                    <div className="space-y-4">
 
 
 
-                    <div className="flex justify-between items-center border-b pb-2">
-                        <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني</h3>
-                        <button
-                            type="button"
-                            onClick={addSegment}
-                            className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full font-bold transition-colors"
-                        >
-                            + إضافة مقطع
-                        </button>
-                    </div>
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني</h3>
+                            <button
+                                type="button"
+                                onClick={addSegment}
+                                className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full font-bold transition-colors"
+                            >
+                                + إضافة مقطع
+                            </button>
+                        </div>
 
-                    <div className="space-y-6">
-                        {segments.map((seg, idx) => {
-                            const currentSurah = SURAHS.find(s => s.number === seg.surah) || SURAHS[0];
-                            const ayahOptions = getAyahOptions(currentSurah.ayahCount);
+                        <div className="space-y-6">
+                            {segments.map((seg, idx) => {
+                                const currentSurah = SURAHS.find(s => s.number === seg.surah) || SURAHS[0];
+                                const ayahOptions = getAyahOptions(currentSurah.ayahCount);
 
-                            return (
-                                <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 relative group">
-                                    {segments.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSegment(idx)}
-                                            className="absolute top-2 left-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors z-10"
-                                            title="حذف المقطع"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                                            </svg>
-                                        </button>
-                                    )}
-
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">السورة</label>
-                                            <select
-                                                required
-                                                value={seg.surah}
-                                                onChange={(e) => updateSegment(idx, 'surah', parseInt(e.target.value))}
-                                                className="w-full p-2 border rounded dark:bg-slate-700 font-sans text-sm"
+                                return (
+                                    <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 relative group">
+                                        {segments.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeSegment(idx)}
+                                                className="absolute top-2 left-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors z-10"
+                                                title="حذف المقطع"
                                             >
-                                                {SURAHS.map(s => (
-                                                    <option key={s.number} value={s.number}>
-                                                        {s.number}. {s.name} ({s.ayahCount} آية)
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
 
-                                        <div className="flex gap-3">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">من آية</label>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">السورة</label>
                                                 <select
                                                     required
-                                                    value={seg.start}
-                                                    onChange={(e) => updateSegment(idx, 'start', parseInt(e.target.value))}
-                                                    className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                    value={seg.surah}
+                                                    onChange={(e) => updateSegment(idx, 'surah', parseInt(e.target.value))}
+                                                    className="w-full p-2 border rounded dark:bg-slate-700 font-sans text-sm"
                                                 >
-                                                    {ayahOptions.map(n => (
-                                                        <option key={n} value={n}>{n}</option>
+                                                    {SURAHS.map(s => (
+                                                        <option key={s.number} value={s.number}>
+                                                            {s.number}. {s.name} ({s.ayahCount} آية)
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">إلى آية</label>
-                                                <select
-                                                    required
-                                                    value={seg.end}
-                                                    onChange={(e) => updateSegment(idx, 'end', parseInt(e.target.value))}
-                                                    className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
-                                                >
-                                                    {ayahOptions.filter(n => n >= seg.start).map(n => (
-                                                        <option key={n} value={n}>{n}</option>
-                                                    ))}
-                                                </select>
+
+                                            <div className="flex gap-3">
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">من آية</label>
+                                                    <select
+                                                        required
+                                                        value={seg.start}
+                                                        onChange={(e) => updateSegment(idx, 'start', parseInt(e.target.value))}
+                                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                    >
+                                                        {ayahOptions.map(n => (
+                                                            <option key={n} value={n}>{n}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">إلى آية</label>
+                                                    <select
+                                                        required
+                                                        value={seg.end}
+                                                        onChange={(e) => updateSegment(idx, 'end', parseInt(e.target.value))}
+                                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                    >
+                                                        {ayahOptions.filter(n => n >= seg.start).map(n => (
+                                                            <option key={n} value={n}>{n}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">

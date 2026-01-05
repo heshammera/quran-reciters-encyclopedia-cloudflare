@@ -49,7 +49,7 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                 .filter((r: any) => r.type !== 'video')
                 .map((recording: any) => ({
                     id: recording.id,
-                    title: recording.title || `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}`,
+                    title: recording.title || (recording.surah_number ? `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}` : 'تسجيل عام'),
                     reciterName: reciter.name_ar,
                     src: recording.media_files?.[0]?.archive_url || "",
                     surahNumber: recording.surah_number,
@@ -105,7 +105,7 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                             // For audio recordings, build track
                             const track: Track | null = isVideo ? null : {
                                 id: recording.id,
-                                title: recording.title || `سورة ${recording.surah_number}`,
+                                title: recording.title || (recording.surah_number ? `سورة ${recording.surah_number}` : 'تسجيل عام'),
                                 reciterName: reciter.name_ar,
                                 src: recording.media_files?.[0]?.archive_url || "",
                                 surahNumber: recording.surah_number,
@@ -139,12 +139,14 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-slate-900 dark:text-white">
-                                                    {recording.title || `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}`}
+                                                    {recording.title || (recording.surah_number ? `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}` : 'تسجيل عام')}
                                                 </span>
-                                                <span className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                                                    {recording.title && <span>سورة {recording.surah_number} - </span>}
-                                                    (الآيات {recording.ayah_start}-{recording.ayah_end})
-                                                </span>
+                                                {recording.surah_number && (
+                                                    <span className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                                        {recording.title && <span>سورة {recording.surah_number} - </span>}
+                                                        (الآيات {recording.ayah_start}-{recording.ayah_end})
+                                                    </span>
+                                                )}
                                             </div>
                                             {isVideo && (
                                                 <span className="text-[10px] sm:text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-medium">

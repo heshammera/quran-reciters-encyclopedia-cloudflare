@@ -77,7 +77,7 @@ export default function ReciterTimeline({ recordings }: ReciterTimelineProps) {
                         {groupRecordings.map(rec => {
                             const track: Track = {
                                 id: rec.id,
-                                title: rec.title || `سورة ${rec.surah_number}`,
+                                title: rec.title || (rec.surah_number ? `سورة ${rec.surah_number}` : 'تسجيل عام'),
                                 reciterName: rec.reciterName || 'Unknown',
                                 src: rec.src || '',
                                 surahNumber: rec.surah_number,
@@ -91,14 +91,22 @@ export default function ReciterTimeline({ recordings }: ReciterTimelineProps) {
                                             <div className="flex-1 min-w-0">
                                                 <Link href={`/recordings/${rec.id}`} className="block">
                                                     <h4 className={`font-bold text-slate-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors ${isLean ? 'text-base' : 'text-xl'}`}>
-                                                        {rec.title || `سورة ${rec.surah_number}`}
+                                                        {rec.title || (rec.surah_number ? `سورة ${rec.surah_number}` : 'تسجيل عام')}
                                                     </h4>
                                                     {!isLean && (
                                                         <>
                                                             <div className="text-sm text-slate-500 dark:text-slate-400 mb-2 font-mono">
-                                                                {rec.title && <span>سورة {rec.surah_number} - </span>}
-                                                                <span>(الآيات {rec.ayah_start} - {rec.ayah_end})</span>
-                                                                {rec.city && <span> • {rec.city}</span>}
+                                                                {rec.surah_number ? (
+                                                                    <>
+                                                                        {rec.title && <span>سورة {rec.surah_number} - </span>}
+                                                                        <span>(الآيات {rec.ayah_start} - {rec.ayah_end})</span>
+                                                                        {rec.city && <span> • {rec.city}</span>}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        {rec.city && <span>{rec.city}</span>}
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </>
                                                     )}
