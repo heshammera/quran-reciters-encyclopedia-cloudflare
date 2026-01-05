@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLeanMode } from "@/context/LeanModeContext";
+import { SURAHS } from "@/lib/quran/metadata";
 
 export default function HomeRecordings({ featured, latest }: { featured: any[], latest: any[] }) {
     const { isLean } = useLeanMode();
@@ -32,7 +33,7 @@ export default function HomeRecordings({ featured, latest }: { featured: any[], 
                                         {recording.reciters?.name_ar}
                                     </p>
                                     <p className="text-xs text-slate-500 truncate">
-                                        سورة {recording.surah_number} {recording.city && `• ${recording.city}`}
+                                        {recording.title || (recording.surah_number ? `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name}` : 'تسجيل عام')} {recording.city && `• ${recording.city}`}
                                     </p>
                                 </div>
                             </div>
@@ -61,7 +62,7 @@ export default function HomeRecordings({ featured, latest }: { featured: any[], 
                                 ? 'w-8 h-8 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px]'
                                 : 'w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-xs'
                                 }`}>
-                                {recording.surah_number}
+                                {recording.surah_number || "🔊"}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className={`font-bold text-slate-800 dark:text-slate-200 truncate ${isLean ? 'text-xs' : 'text-sm'}`}>

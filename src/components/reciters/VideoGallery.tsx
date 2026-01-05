@@ -77,7 +77,7 @@ export default function VideoGallery({ videos, onPlay }: VideoGalleryProps) {
                     <div className="p-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
                             <h3 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                سورة {SURAHS.find(s => s.number === video.surah_number)?.name || video.surah_number}
+                                {video.title || (video.surah_number ? `سورة ${SURAHS.find(s => s.number === video.surah_number)?.name}` : 'فيديو عام')}
                             </h3>
                             {video.section && (
                                 <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-full shrink-0">

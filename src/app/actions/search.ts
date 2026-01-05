@@ -48,6 +48,7 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
             .from("recordings")
             .select(`
                 id, 
+                title,
                 surah_number, 
                 city, 
                 recording_date, 
@@ -59,14 +60,17 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
             .limit(5);
 
         if (surahRecordings) {
-            surahRecordings.forEach((r: any) => {
-                results.push({
-                    type: "recording",
-                    id: r.id,
-                    title: `سورة ${r.surah_number}`,
-                    subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
-                    url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
-                    image_url: null
+            import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
+                surahRecordings.forEach((r: any) => {
+                    const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+                    results.push({
+                        type: "recording",
+                        id: r.id,
+                        title: name,
+                        subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
+                        url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
+                        image_url: null
+                    });
                 });
             });
         }
@@ -90,6 +94,7 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                     .from("recordings")
                     .select(`
                         id,
+                        title,
                         surah_number,
                         ayah_start,
                         ayah_end,
@@ -103,18 +108,19 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                     .limit(2);
 
                 if (ayahRecordings) {
-                    ayahRecordings.forEach((r: any) => {
-                        results.push({
-                            type: "ayah",
-                            id: r.id,
-                            title: `${ayah.surah_name_ar} - آية ${ayah.ayah_number}`,
-                            subtitle: `${r.reciter.name_ar}`,
-                            url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
-                            image_url: null,
-                            meta: {
-                                surah_number: ayah.surah_number,
-                                ayah_number: ayah.ayah_number
-                            }
+                    import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
+                        ayahRecordings.forEach((r: any) => {
+                            if (results.some(existing => existing.id === r.id)) return;
+                            const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+
+                            results.push({
+                                type: "ayah",
+                                id: r.id,
+                                title: name,
+                                subtitle: `القارئ ${r.reciter.name_ar} (الآية ${ayah.ayah_number})`,
+                                url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}?t=${ayah.ayah_number}`, // TODO: Deep linking
+                                image_url: null
+                            });
                         });
                     });
                 }
@@ -131,6 +137,7 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                 .from("recordings")
                 .select(`
                     id, 
+                    title,
                     surah_number, 
                     city, 
                     recording_date, 
@@ -142,14 +149,17 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                 .limit(5);
 
             if (numericRecordings) {
-                numericRecordings.forEach((r: any) => {
-                    results.push({
-                        type: "recording",
-                        id: r.id,
-                        title: `سورة ${r.surah_number}`,
-                        subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
-                        url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
-                        image_url: null
+                import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
+                    numericRecordings.forEach((r: any) => {
+                        const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+                        results.push({
+                            type: "recording",
+                            id: r.id,
+                            title: name,
+                            subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
+                            url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
+                            image_url: null
+                        });
                     });
                 });
             }

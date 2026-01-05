@@ -85,7 +85,7 @@ export default function VideoModal({ video, onClose }: VideoModalProps) {
                 <div className="bg-slate-900 text-white p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold mb-1">
-                            سورة {SURAHS.find(s => s.number === video.surah_number)?.name || video.surah_number}
+                            {video.title || (video.surah_number ? `سورة ${SURAHS.find(s => s.number === video.surah_number)?.name}` : 'فيديو عام')}
                         </h2>
                         <p className="text-slate-400 text-sm">
                             {video.section?.name_ar} • {video.reciter?.name_ar}

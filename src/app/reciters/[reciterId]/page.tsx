@@ -133,7 +133,7 @@ export default async function ReciterPage({ params, searchParams }: ReciterPageP
                                 <ReciterTimeline
                                     recordings={timelineData.map((t: any) => ({
                                         id: t.id,
-                                        title: SURAHS.find(s => s.number === t.surah_number)?.name || `سورة ${t.surah_number}`,
+                                        title: t.title || (t.surah_number ? `سورة ${SURAHS.find(s => s.number === t.surah_number)?.name || t.surah_number}` : 'تسجيل عام'),
                                         surah_number: t.surah_number,
                                         ayah_start: t.ayah_start,
                                         ayah_end: t.ayah_end,
