@@ -5,6 +5,7 @@ import { getRecording, getSimilarRecordings } from "@/lib/supabase/queries";
 import { formatTime } from "@/lib/utils";
 import PlayButton from "@/components/player/PlayButton";
 import { Metadata } from "next";
+import { getSurahName } from "@/lib/quran-helpers";
 
 interface RecordingPageProps {
     params: Promise<{
@@ -17,9 +18,28 @@ export async function generateMetadata({ params }: RecordingPageProps): Promise<
     const recording = await getRecording(id);
     if (!recording) return { title: "تلاوة غير موجودة" };
 
+    let displayTitle = recording.title;
+    let description = "";
+
+    if (!displayTitle) {
+        if (recording.recording_coverage && recording.recording_coverage.length > 1) {
+            const surahNames = recording.recording_coverage
+                .map((seg: any) => getSurahName(seg.surah_number))
+                .join(" و");
+            displayTitle = `سورة ${surahNames} - ${recording.reciter.name_ar}`;
+            description = `استمع لتلاوة سور ${surahNames} بصوت القارئ ${recording.reciter.name_ar}.`;
+        } else {
+            const surahName = recording.surah_number ? getSurahName(recording.surah_number) : "عامة";
+            displayTitle = recording.surah_number ? `سورة ${surahName} - ${recording.reciter.name_ar}` : `${recording.reciter.name_ar}`;
+            description = `استمع لتلاوة سورة ${surahName} بصوت القارئ ${recording.reciter.name_ar}.`;
+        }
+    } else {
+        description = `استمع لتلاوة ${displayTitle} بصوت القارئ ${recording.reciter.name_ar}.`;
+    }
+
     return {
-        title: `سورة ${recording.surah_number} - ${recording.reciter.name_ar} | موسوعة القراء`,
-        description: `استمع لتلاوة سورة ${recording.surah_number} بصوت القارئ ${recording.reciter.name_ar}. الدولة: ${recording.city}. التاريخ: ${recording.recording_date?.year || 'غير معروف'}.`
+        title: `${displayTitle} | موسوعة القراء`,
+        description: `${description} الدولة: ${recording.city}. التاريخ: ${recording.recording_date?.year || 'غير معروف'}.`
     };
 }
 
@@ -35,10 +55,24 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
 
     const similarRecordings = await getSimilarRecordings(recording.id, recording.surah_number);
 
+    // Construct display title for the page
+    let displayTitle = recording.title;
+    if (!displayTitle) {
+        if (recording.recording_coverage && recording.recording_coverage.length > 1) {
+            const surahNames = recording.recording_coverage
+                .map((seg: any) => getSurahName(seg.surah_number))
+                .join(" و");
+            displayTitle = `سورة ${surahNames}`;
+        } else {
+            const surahName = recording.surah_number ? getSurahName(recording.surah_number) : "عامة";
+            displayTitle = recording.surah_number ? `سورة ${surahName}` : 'تسجيل عام';
+        }
+    }
+
     // Construct track object for player
     const track = {
         id: recording.id,
-        title: `سورة ${recording.surah_number}`,
+        title: displayTitle,
         reciterName: recording.reciter.name_ar,
         src: recording.media_files?.find((m: any) => m.media_type === 'audio')?.archive_url || '',
         duration: recording.duration_seconds
@@ -71,7 +105,7 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                         <div className="flex-1 text-center md:text-right space-y-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                                    سورة {recording.surah_number}
+                                    {displayTitle}
                                 </h1>
                                 <Link
                                     href={`/reciters/${recording.reciter.id}`}
@@ -128,9 +162,29 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                                             <span className="font-bold text-slate-700 dark:text-slate-300">جودة التسجيل:</span> {recording.quality_level}
                                         </p>
                                     )}
-                                    <p className="text-sm">
-                                        <span className="font-bold text-slate-700 dark:text-slate-300">نطاق الآيات:</span> {recording.ayah_start} - {recording.ayah_end}
-                                    </p>
+
+                                    <div className="pt-2">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">محتوى التسجيل:</span>
+                                        {recording.recording_coverage && recording.recording_coverage.length > 0 ? (
+                                            <ul className="space-y-2">
+                                                {recording.recording_coverage.map((seg: any, idx: number) => (
+                                                    <li key={idx} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                                            سورة {getSurahName(seg.surah_number)}
+                                                        </span>
+                                                        <span className="text-slate-400">|</span>
+                                                        <span className="text-sm text-slate-500">
+                                                            الآيات {seg.ayah_start} - {seg.ayah_end}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-sm">
+                                                <span className="font-bold text-slate-700 dark:text-slate-300">نطاق الآيات:</span> {recording.ayah_start} - {recording.ayah_end}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}

@@ -72,7 +72,13 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
     // Load segments from initialData when editing
     useEffect(() => {
-        if (initialData?.surah_number && initialData?.ayah_start && initialData?.ayah_end) {
+        if (initialData?.recording_coverage && initialData.recording_coverage.length > 0) {
+            setSegments(initialData.recording_coverage.map((seg: any) => ({
+                surah: seg.surah_number,
+                start: seg.ayah_start,
+                end: seg.ayah_end
+            })));
+        } else if (initialData?.surah_number && initialData?.ayah_start && initialData?.ayah_end) {
             setSegments([{
                 surah: initialData.surah_number,
                 start: initialData.ayah_start,

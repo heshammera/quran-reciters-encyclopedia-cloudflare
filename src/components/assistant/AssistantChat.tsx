@@ -19,6 +19,26 @@ export default function AssistantChat() {
     const [showWelcome, setShowWelcome] = useState(false);
     const { dispatch, state } = usePlayer();
 
+    // Draggable logic
+    const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStart = useRef({ x: 0, y: 0 });
+    const initialPos = useRef({ x: 0, y: 0 });
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const dragThreshold = 5; // Pixels to move before considering it a drag
+
+    // Load saved position
+    useEffect(() => {
+        const saved = localStorage.getItem("assistant_position");
+        if (saved) {
+            try {
+                setPosition(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error loading position", e);
+            }
+        }
+    }, []);
+
     // Welcome logic
     useEffect(() => {
         const welcomed = sessionStorage.getItem("assistant_welcomed_v2");
@@ -134,18 +154,111 @@ export default function AssistantChat() {
         }
     };
 
+    // Drag Handlers
+    const startDragging = (e: React.MouseEvent | React.TouchEvent) => {
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        dragStart.current = { x: clientX, y: clientY };
+
+        const rect = buttonRef.current?.getBoundingClientRect();
+        if (rect) {
+            initialPos.current = { x: rect.left, y: rect.top };
+        }
+
+        setIsDragging(false); // Reset at start
+
+        const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+            const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+            const dx = currentX - dragStart.current.x;
+            const dy = currentY - dragStart.current.y;
+
+            if (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold) {
+                setIsDragging(true);
+                const newX = initialPos.current.x + dx;
+                const newY = initialPos.current.y + dy;
+
+                // Bounds checking
+                const boundedX = Math.max(10, Math.min(window.innerWidth - 70, newX));
+                const boundedY = Math.max(80, Math.min(window.innerHeight - 70, newY)); // Ensure it stays below header (h-16 = 64px)
+
+                const newPos = { x: boundedX, y: boundedY };
+                setPosition(newPos);
+            }
+        };
+
+        const endHandler = () => {
+            window.removeEventListener("mousemove", moveHandler);
+            window.removeEventListener("mouseup", endHandler);
+            window.removeEventListener("touchmove", moveHandler);
+            window.removeEventListener("touchend", endHandler);
+
+            // Save position if we dragged
+            if (position) {
+                localStorage.setItem("assistant_position", JSON.stringify(position));
+            }
+        };
+
+        window.addEventListener("mousemove", moveHandler);
+        window.addEventListener("mouseup", endHandler);
+        window.addEventListener("touchmove", moveHandler);
+        window.addEventListener("touchend", endHandler);
+    };
+
+    const handleButtonClick = () => {
+        if (!isDragging) {
+            setIsOpen(true);
+            dismissWelcome();
+        }
+    };
+
+    const floatingStyle = position ? {
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        bottom: 'auto',
+        right: 'auto',
+        touchAction: 'none'
+    } : {
+        bottom: '1.5rem',
+        right: '1.5rem',
+        touchAction: 'none'
+    };
+
+    const welcomeStyle = position ? {
+        left: `${position.x - 140}px`,
+        top: `${position.y - 80}px`,
+        bottom: 'auto',
+        right: 'auto'
+    } : {
+        bottom: '6rem',
+        right: '1.5rem'
+    };
+
+    const chatStyle = position ? {
+        left: Math.min(window.innerWidth - 370, Math.max(10, position.x - 300)),
+        top: Math.max(80, Math.min(window.innerHeight - 520, position.y - 500))
+    } : {
+        bottom: '1.5rem',
+        right: '1.5rem'
+    };
+
     return (
         <>
             {/* Welcome Bubble */}
             {showWelcome && !isOpen && (
-                <div className="fixed bottom-24 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div
+                    className="fixed z-50 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    style={welcomeStyle}
+                >
                     <div className="relative bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl max-w-[200px] text-sm font-bold">
                         <button
                             onClick={dismissWelcome}
                             className="absolute -top-2 -right-2 bg-slate-800 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
                         >✕</button>
                         أهلاً بك! أنا مساعدك الذكي، يمكنني مساعدتك في البحث عن التلاوات والنوادر.
-                        <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-emerald-600"></div>
+                        <div className="absolute bottom-[-8px] md:right-6 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-emerald-600"></div>
                     </div>
                 </div>
             )}
@@ -153,10 +266,14 @@ export default function AssistantChat() {
             {/* Floating Button */}
             {!isOpen && (
                 <button
-                    onClick={() => { setIsOpen(true); dismissWelcome(); }}
-                    className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg transition-all flex items-center justify-center group transform hover:scale-110 active:scale-95"
+                    ref={buttonRef}
+                    onMouseDown={startDragging}
+                    onTouchStart={startDragging}
+                    onClick={handleButtonClick}
+                    className="fixed z-50 w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg transition-transform flex items-center justify-center group transform hover:scale-110 active:scale-95 select-none cursor-grab active:cursor-grabbing"
+                    style={floatingStyle}
                 >
-                    <div className="relative">
+                    <div className="relative pointer-events-none">
                         {showWelcome && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-ping"></span>}
                         <svg className="w-6 h-6 border-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -167,7 +284,10 @@ export default function AssistantChat() {
 
             {/* Chat Panel */}
             {isOpen && (
-                <div className="fixed bottom-6 right-6 z-50 w-[350px] max-w-[calc(100vw-3rem)] h-[500px] bg-white dark:bg-slate-800 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+                <div
+                    className="fixed z-50 w-[350px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-4rem)] bg-white dark:bg-slate-800 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5"
+                    style={chatStyle}
+                >
                     {/* Header */}
                     <div className="bg-emerald-600 p-5 flex items-center justify-between">
                         <div className="flex items-center gap-3">

@@ -26,8 +26,8 @@ export async function findRecordingsForAyah(params: CompareParams) {
         `)
         .eq("is_published", true)
         .eq("surah_number", params.surahNumber)
-        .lte("ayah_start", params.ayahStart) // Recording starts at or before requested start
-        .gte("ayah_end", params.ayahEnd) // Recording ends at or after requested end
+        .lte("ayah_start", params.ayahEnd) // Recording starts before or at the requested end
+        .gte("ayah_end", params.ayahStart) // Recording ends after or at the requested start
         .not("media_files.archive_url", "is", null)
         .eq("media_files.is_primary", true)
         .order("reciters(name_ar)");

@@ -122,7 +122,8 @@ export async function getRecording(id: string) {
             *,
             reciter:reciters(*),
             section:sections(*),
-            media_files(*)
+            media_files(*),
+            recording_coverage(*)
         `)
         .eq("id", id)
         .single();

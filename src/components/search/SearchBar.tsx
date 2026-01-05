@@ -8,6 +8,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 
 import { useLeanMode } from "@/context/LeanModeContext";
+import { usePlayer } from "@/hooks/usePlayer";
 
 const PLACEHOLDERS = [
     "ابحث عن قارئ (مثال: المنشاوي)...",
@@ -19,6 +20,7 @@ const PLACEHOLDERS = [
 
 export default function SearchBar() {
     const { isLean } = useLeanMode();
+    const { playTrack } = usePlayer();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -149,7 +151,7 @@ export default function SearchBar() {
 
             {/* Results Dropdown */}
             {isOpen && (query.length >= 2) && (
-                <div className="absolute top-full mt-4 w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full mt-4 w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                     {loading ? (
                         <div className="p-8 text-center text-slate-500">
                             <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-3"></div>
@@ -159,11 +161,13 @@ export default function SearchBar() {
                         <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
                             <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
                                 {results.map((result) => (
-                                    <Link
+                                    <div
                                         key={`${result.type}-${result.id}`}
-                                        href={result.url}
-                                        onClick={() => setIsOpen(false)}
-                                        className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
+                                        className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group cursor-pointer"
+                                        onClick={() => {
+                                            setIsOpen(false);
+                                            router.push(result.url);
+                                        }}
                                     >
                                         <div className={cn(
                                             "w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-sm transition-transform group-hover:scale-110",
@@ -171,15 +175,35 @@ export default function SearchBar() {
                                         )}>
                                             {result.type === 'reciter' ? '🎙️' : '📜'}
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-emerald-600 transition-colors">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-emerald-600 transition-colors truncate">
                                                 {result.title}
                                             </div>
                                             {result.subtitle && (
-                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{result.subtitle}</div>
+                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">{result.subtitle}</div>
                                             )}
                                         </div>
-                                    </Link>
+                                        {(result.type === 'recording' || result.type === 'ayah') && result.src && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    playTrack({
+                                                        id: result.id,
+                                                        title: result.title,
+                                                        src: result.src!,
+                                                        reciterName: result.subtitle?.split('-')[0].trim() || 'قارئ',
+                                                    });
+                                                }}
+                                                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-all text-sm font-bold shadow-sm shrink-0"
+                                                title="تشغيل مباشر"
+                                            >
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M8 5v14l11-7z" />
+                                                </svg>
+                                                <span>تشغيل</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -194,4 +218,3 @@ export default function SearchBar() {
         </div>
     );
 }
-

@@ -19,7 +19,8 @@ export default async function EditRecordingPage({ params }: EditRecordingPagePro
             media_files (
                 archive_url,
                 is_primary
-            )
+            ),
+            recording_coverage (*)
         `)
         .eq("id", id)
         .single();

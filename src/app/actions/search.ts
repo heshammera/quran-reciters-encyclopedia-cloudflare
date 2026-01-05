@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getSurahNumber, normalizeQuranText, SURAH_NAMES } from "@/lib/quran-helpers";
 
 export type SearchResult = {
     type: "reciter" | "recording" | "ayah";
@@ -8,23 +9,31 @@ export type SearchResult = {
     title: string;
     subtitle?: string;
     url: string;
+    src?: string; // Audio file URL for direct playback
     image_url?: string | null;
     meta?: any; // Extra metadata like surah/ayah number for logic
 };
 
-export async function searchGlobal(query: string): Promise<SearchResult[]> {
+/**
+ * Searches across reciters, recordings (by surah, ayah, city, title), and ayah text.
+ */
+export async function searchGlobal(query: string, limit: number = 5): Promise<SearchResult[]> {
     if (!query || query.trim().length < 2) return [];
 
     const supabase = await createClient();
-    const searchTerm = `%${query.trim()}%`;
+    const cleanQuery = query.trim();
+    const normalizedQuery = normalizeQuranText(cleanQuery);
+    const searchTerm = `%${cleanQuery}%`;
+    const normalizedSearchTerm = `%${normalizedQuery}%`;
+
     const results: SearchResult[] = [];
 
     // 1. Search Reciters
     const { data: reciters } = await supabase
         .from("reciters")
         .select("id, name_ar, image_url")
-        .ilike("name_ar", searchTerm)
-        .limit(5);
+        .ilike("name_ar_normalized", normalizedSearchTerm)
+        .limit(limit);
 
     if (reciters) {
         reciters.forEach(r => {
@@ -40,8 +49,7 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
     }
 
     // 2. Search by Surah Name
-    const { getSurahNumber } = await import("@/lib/quran-helpers");
-    const surahNumber = getSurahNumber(query.trim());
+    const surahNumber = getSurahNumber(cleanQuery);
 
     if (surahNumber) {
         const { data: surahRecordings } = await supabase
@@ -50,45 +58,43 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                 id, 
                 title,
                 surah_number, 
+                ayah_start,
+                ayah_end,
                 city, 
                 recording_date, 
                 reciter:reciters!inner(id, name_ar),
-                section:sections(name_ar, slug)
+                section:sections(name_ar, slug),
+                media_files(archive_url)
             `)
             .eq("is_published", true)
             .eq("surah_number", surahNumber)
-            .limit(5);
+            .limit(limit);
 
         if (surahRecordings) {
-            import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
-                surahRecordings.forEach((r: any) => {
-                    const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
-                    results.push({
-                        type: "recording",
-                        id: r.id,
-                        title: name,
-                        subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
-                        url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
-                        image_url: null
-                    });
+            surahRecordings.forEach((r: any) => {
+                const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}${r.ayah_start ? ` (${r.ayah_start}-${r.ayah_end})` : ''}` : 'تسجيل عام');
+                results.push({
+                    type: "recording",
+                    id: r.id,
+                    title: name,
+                    subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
+                    url: `/recordings/${r.id}`,
+                    src: r.media_files?.[0]?.archive_url,
+                    image_url: null
                 });
             });
         }
     }
 
     // 3. Search by Ayah Text
-    const { normalizeQuranText } = await import("@/lib/quran-helpers");
-    const normalizedQuery = normalizeQuranText(query.trim());
-
     if (normalizedQuery.length >= 3) {
         const { data: ayahMatches } = await supabase
             .from("quran_index")
             .select("surah_number, ayah_number, surah_name_ar")
-            .ilike("text_normalized", `%${normalizedQuery}%`)
-            .limit(3);
+            .ilike("text_normalized", normalizedSearchTerm)
+            .limit(limit === 5 ? 3 : limit);
 
         if (ayahMatches && ayahMatches.length > 0) {
-            // For each ayah match, find recordings that contain it
             for (const ayah of ayahMatches) {
                 const { data: ayahRecordings } = await supabase
                     .from("recordings")
@@ -99,7 +105,8 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                         ayah_start,
                         ayah_end,
                         reciter:reciters!inner(id, name_ar),
-                        section:sections(name_ar, slug)
+                        section:sections(name_ar, slug),
+                        media_files(archive_url)
                     `)
                     .eq("is_published", true)
                     .eq("surah_number", ayah.surah_number)
@@ -108,19 +115,18 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                     .limit(2);
 
                 if (ayahRecordings) {
-                    import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
-                        ayahRecordings.forEach((r: any) => {
-                            if (results.some(existing => existing.id === r.id)) return;
-                            const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+                    ayahRecordings.forEach((r: any) => {
+                        if (results.some(existing => existing.id === r.id)) return;
+                        const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
 
-                            results.push({
-                                type: "ayah",
-                                id: r.id,
-                                title: name,
-                                subtitle: `القارئ ${r.reciter.name_ar} (الآية ${ayah.ayah_number})`,
-                                url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}?t=${ayah.ayah_number}`, // TODO: Deep linking
-                                image_url: null
-                            });
+                        results.push({
+                            type: "ayah",
+                            id: r.id,
+                            title: name,
+                            subtitle: `القارئ ${r.reciter.name_ar} (الآية ${ayah.ayah_number})`,
+                            url: `/recordings/${r.id}?t=${ayah.ayah_number}`,
+                            src: r.media_files?.[0]?.archive_url,
+                            image_url: null
                         });
                     });
                 }
@@ -128,10 +134,45 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
         }
     }
 
-    // 4. Search by Surah Number (numeric query)
-    const isNumeric = /^\d+$/.test(query.trim());
+    // 4. Search Recordings by Reciter Name (New)
+    const { data: recordingsByReciter } = await supabase
+        .from("recordings")
+        .select(`
+            id, 
+            title,
+            surah_number, 
+            ayah_start,
+            ayah_end,
+            city, 
+            recording_date, 
+            reciter:reciters!inner(id, name_ar),
+            section:sections(name_ar, slug),
+            media_files(archive_url)
+        `)
+        .eq("is_published", true)
+        .ilike("reciters.name_ar_normalized", normalizedSearchTerm)
+        .limit(limit);
+
+    if (recordingsByReciter) {
+        recordingsByReciter.forEach((r: any) => {
+            if (results.some(existing => existing.id === r.id)) return;
+            const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+            results.push({
+                type: "recording",
+                id: r.id,
+                title: name,
+                subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
+                url: `/recordings/${r.id}`,
+                src: r.media_files?.[0]?.archive_url,
+                image_url: null
+            });
+        });
+    }
+
+    // 5. Search by Surah Number (numeric query)
+    const isNumeric = /^\d+$/.test(cleanQuery);
     if (isNumeric) {
-        const surahNum = parseInt(query.trim());
+        const surahNum = parseInt(cleanQuery);
         if (surahNum >= 1 && surahNum <= 114) {
             const { data: numericRecordings } = await supabase
                 .from("recordings")
@@ -142,61 +183,96 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
                     city, 
                     recording_date, 
                     reciter:reciters!inner(id, name_ar),
-                    section:sections(name_ar, slug)
+                    section:sections(name_ar, slug),
+                    media_files(archive_url)
                 `)
                 .eq("is_published", true)
                 .eq("surah_number", surahNum)
-                .limit(5);
+                .limit(limit);
 
             if (numericRecordings) {
-                import("@/lib/quran-helpers").then(({ SURAH_NAMES }) => {
-                    numericRecordings.forEach((r: any) => {
-                        const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
-                        results.push({
-                            type: "recording",
-                            id: r.id,
-                            title: name,
-                            subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
-                            url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
-                            image_url: null
-                        });
+                numericRecordings.forEach((r: any) => {
+                    if (results.some(existing => existing.id === r.id)) return;
+                    const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+                    results.push({
+                        type: "recording",
+                        id: r.id,
+                        title: name,
+                        subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
+                        url: `/recordings/${r.id}`,
+                        src: r.media_files?.[0]?.archive_url,
+                        image_url: null
                     });
                 });
             }
         }
     }
 
-    // 5. Search by City (if not numeric)
+    // 6. Search by Title
+    const { data: titleRecordings } = await supabase
+        .from("recordings")
+        .select(`
+            id, 
+            title,
+            surah_number, 
+            reciter:reciters!inner(id, name_ar),
+            section:sections(name_ar, slug),
+            media_files(archive_url)
+        `)
+        .eq("is_published", true)
+        .ilike("title_normalized", normalizedSearchTerm)
+        .limit(limit);
+
+    if (titleRecordings) {
+        titleRecordings.forEach((r: any) => {
+            if (results.some(existing => existing.id === r.id)) return;
+            const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
+            results.push({
+                type: "recording",
+                id: r.id,
+                title: name,
+                subtitle: `${r.reciter.name_ar}`,
+                url: `/recordings/${r.id}`,
+                src: r.media_files?.[0]?.archive_url,
+                image_url: null
+            });
+        });
+    }
+
+    // 7. Search by City
     if (!isNumeric) {
         const { data: cityRecordings } = await supabase
             .from("recordings")
             .select(`
                 id, 
+                title,
                 surah_number, 
                 city, 
                 recording_date, 
                 reciter:reciters!inner(id, name_ar),
-                section:sections(name_ar, slug)
+                section:sections(name_ar, slug),
+                media_files(archive_url)
             `)
             .eq("is_published", true)
-            .ilike("city", searchTerm)
-            .limit(5);
+            .ilike("city_normalized", normalizedSearchTerm)
+            .limit(limit);
 
         if (cityRecordings) {
             cityRecordings.forEach((r: any) => {
+                if (results.some(existing => existing.id === r.id)) return;
+                const name = r.title || (r.surah_number ? `سورة ${SURAH_NAMES[r.surah_number - 1]}` : 'تسجيل عام');
                 results.push({
                     type: "recording",
                     id: r.id,
-                    title: `سورة ${r.surah_number}`,
+                    title: name,
                     subtitle: `${r.reciter.name_ar} - ${r.city || r.recording_date?.year || 'تلاوة'}`,
-                    url: `/reciters/${r.reciter.id}/${r.section?.slug || 'all'}`,
+                    url: `/recordings/${r.id}`,
+                    src: r.media_files?.[0]?.archive_url,
                     image_url: null
                 });
             });
         }
     }
-
-    // Remove duplicates based on ID
     const uniqueResults = results.filter((result, index, self) =>
         index === self.findIndex((r) => r.id === result.id && r.type === result.type)
     );

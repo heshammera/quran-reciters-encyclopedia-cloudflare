@@ -53,16 +53,19 @@ export function getSurahName(number: number): string {
 export function getSurahNumber(query: string): number | null {
     if (!query || query.trim().length === 0) return null;
 
+    // Clean the query: remove "سورة" or "سوره" prefix
+    let cleanQuery = query.trim().replace(/^(سورة|سوره)\s+/, "");
+
     // Normalize the search query
-    const normalizedQuery = normalizeQuranText(query.trim().toLowerCase());
+    const normalizedQuery = normalizeQuranText(cleanQuery.toLowerCase());
 
     // Search through surah names
     for (let i = 0; i < SURAH_NAMES.length; i++) {
         const surahName = SURAH_NAMES[i];
         const normalizedSurahName = normalizeQuranText(surahName.toLowerCase());
 
-        // Check if the normalized surah name contains the normalized query
-        if (normalizedSurahName.includes(normalizedQuery)) {
+        // Check if the normalized surah name contains or is contained by the normalized query
+        if (normalizedSurahName.includes(normalizedQuery) || normalizedQuery.includes(normalizedSurahName)) {
             return i + 1; // Surah numbers are 1-indexed
         }
     }

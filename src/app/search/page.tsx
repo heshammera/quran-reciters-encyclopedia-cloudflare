@@ -18,7 +18,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     const { q } = await searchParams;
     const query = q || "";
 
-    const results = await searchGlobal(query);
+    const results = await searchGlobal(query, 50);
 
     const reciterResults = results.filter(r => r.type === "reciter");
     const recordingResults = results.filter(r => r.type === "recording");

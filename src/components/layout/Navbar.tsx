@@ -9,7 +9,6 @@ import { usePathname } from "next/navigation";
 
 const links = [
     { href: "/", label: "الرئيسية" },
-    { href: "/search", label: "البحث" },
     { href: "/collections", label: "المجموعات" },
     { href: "/session", label: "🎧 جلسة استماع" },
     { href: "/compare", label: "🎯 مقارنة" },
