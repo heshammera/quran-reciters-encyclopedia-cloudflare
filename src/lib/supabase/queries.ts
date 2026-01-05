@@ -162,6 +162,7 @@ export async function getReciterTimeline(reciterId: string) {
         .from("recordings")
         .select(`
             id,
+            title,
             surah_number,
             ayah_start,
             ayah_end,

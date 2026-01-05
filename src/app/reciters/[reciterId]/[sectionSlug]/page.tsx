@@ -49,7 +49,7 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                 .filter((r: any) => r.type !== 'video')
                 .map((recording: any) => ({
                     id: recording.id,
-                    title: `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}`,
+                    title: recording.title || `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}`,
                     reciterName: reciter.name_ar,
                     src: recording.media_files?.[0]?.archive_url || "",
                     surahNumber: recording.surah_number,
@@ -105,7 +105,7 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                             // For audio recordings, build track
                             const track: Track | null = isVideo ? null : {
                                 id: recording.id,
-                                title: `سورة ${recording.surah_number}`,
+                                title: recording.title || `سورة ${recording.surah_number}`,
                                 reciterName: reciter.name_ar,
                                 src: recording.media_files?.[0]?.archive_url || "",
                                 surahNumber: recording.surah_number,
@@ -137,12 +137,15 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-sm font-bold text-slate-900 dark:text-white">
-                                                سورة {SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}
-                                            </span>
-                                            <span className="text-xs text-slate-500 dark:text-slate-500">
-                                                (الآيات {recording.ayah_start}-{recording.ayah_end})
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {recording.title || `سورة ${SURAHS.find(s => s.number === recording.surah_number)?.name || recording.surah_number}`}
+                                                </span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                                    {recording.title && <span>سورة {recording.surah_number} - </span>}
+                                                    (الآيات {recording.ayah_start}-{recording.ayah_end})
+                                                </span>
+                                            </div>
                                             {isVideo && (
                                                 <span className="text-[10px] sm:text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-medium">
                                                     فيديو

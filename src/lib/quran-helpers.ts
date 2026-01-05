@@ -45,3 +45,27 @@ export function getSurahName(number: number): string {
     if (number < 1 || number > 114) return "";
     return SURAH_NAMES[number - 1];
 }
+
+/**
+ * Search for a surah number by name (supports partial matching)
+ * Returns the surah number if found, otherwise null
+ */
+export function getSurahNumber(query: string): number | null {
+    if (!query || query.trim().length === 0) return null;
+
+    // Normalize the search query
+    const normalizedQuery = normalizeQuranText(query.trim().toLowerCase());
+
+    // Search through surah names
+    for (let i = 0; i < SURAH_NAMES.length; i++) {
+        const surahName = SURAH_NAMES[i];
+        const normalizedSurahName = normalizeQuranText(surahName.toLowerCase());
+
+        // Check if the normalized surah name contains the normalized query
+        if (normalizedSurahName.includes(normalizedQuery)) {
+            return i + 1; // Surah numbers are 1-indexed
+        }
+    }
+
+    return null;
+}

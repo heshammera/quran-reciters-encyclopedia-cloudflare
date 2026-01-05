@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { validateAyahRange, checkDuplicateCoverage, validateRecordingMetadata, type SoftValidationWarning } from "@/lib/quran/validator";
 import { uploadFile, getPresignedUploadUrl } from "@/app/actions/storage";
@@ -30,13 +30,14 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
     const [formData, setFormData] = useState({
         archival_id: initialData?.archival_id || "",
         reciter_id: initialData?.reciter_id || "",
+        title: initialData?.title || "",
         section_id: initialData?.section_id || "",
         reciter_phase_id: initialData?.reciter_phase_id || "", // New field
         surah_number: initialData?.surah_number || 1,
         ayah_start: initialData?.ayah_start || 1,
         ayah_end: initialData?.ayah_end || 1,
         city: initialData?.city || "",
-        year: initialData?.recording_date?.year || new Date().getFullYear(),
+        time_period: initialData?.recording_date?.year ? String(initialData.recording_date.year) : (initialData?.recording_date?.time_period || "غير محدد"),
         duration_seconds: initialData?.duration_seconds || 0,
         source_description: initialData?.source_description || "",
         quality_level: initialData?.quality_level || "",
@@ -63,6 +64,17 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
             }));
         }
     }, [segments]);
+
+    // Load segments from initialData when editing
+    useEffect(() => {
+        if (initialData?.surah_number && initialData?.ayah_start && initialData?.ayah_end) {
+            setSegments([{
+                surah: initialData.surah_number,
+                start: initialData.ayah_start,
+                end: initialData.ayah_end
+            }]);
+        }
+    }, [initialData?.id]); // Only run when the recording ID changes
 
     // Fetch initial data
     useEffect(() => {
@@ -115,6 +127,17 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
     const [duplicateWarning, setDuplicateWarning] = useState(false);
     const [validationWarnings, setValidationWarnings] = useState<SoftValidationWarning[]>([]);
     const [ignoreWarnings, setIgnoreWarnings] = useState(false);
+
+    // Compute if form is valid for publishing (reactive)
+    const isFormValid = useMemo(() => {
+        return !!(formData.reciter_id &&
+            formData.section_id &&
+            formData.city &&
+            formData.time_period &&
+            formData.time_period !== "" &&
+            formData.duration_seconds > 0 &&
+            formData.source_description);
+    }, [formData.reciter_id, formData.section_id, formData.city, formData.time_period, formData.duration_seconds, formData.source_description]);
 
     const checkDuplicates = async () => {
         if (!formData.reciter_id || segments.length === 0) return false;
@@ -183,7 +206,7 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 updates.duration_seconds = Math.round(metadata.format.duration);
             }
             if (metadata.common.year) {
-                updates.year = metadata.common.year;
+                updates.time_period = String(metadata.common.year);
             }
             if (metadata.common.album && !formData.source_description) {
                 updates.source_description = metadata.common.album;
@@ -276,7 +299,7 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
             if (data.metadata) {
                 const updates: any = {};
-                if (data.metadata.year) updates.year = parseInt(data.metadata.year) || undefined;
+                if (data.metadata.year) updates.time_period = String(data.metadata.year);
                 if (data.metadata.title) updates.source_description = data.metadata.title;
 
                 // Try to find duration from files
@@ -313,7 +336,7 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
         // Soft Validation checks
         const warnings = validateRecordingMetadata({
-            year: parseInt(formData.year.toString()),
+            year: parseInt(formData.time_period) || 0, // Try to parse as number, or use 0 if text
             duration_seconds: parseInt(formData.duration_seconds.toString()),
             city: formData.city,
             quality_level: formData.quality_level
@@ -351,7 +374,8 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
             const mainSegment = segments[0];
 
             const payload: any = {
-                archival_id: formData.archival_id,
+                archival_id: formData.archival_id?.trim(),
+                title: formData.title?.trim(),
                 reciter_id: formData.reciter_id,
                 section_id: formData.section_id,
                 reciter_phase_id: formData.reciter_phase_id || null, // Allow null
@@ -359,7 +383,10 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 ayah_start: mainSegment.start,       // Primary Start
                 ayah_end: mainSegment.end,           // Primary End
                 city: formData.city,
-                recording_date: { year: parseInt(formData.year.toString()) },
+                recording_date: {
+                    year: parseInt(formData.time_period) || null,
+                    time_period: formData.time_period
+                },
                 duration_seconds: parseInt(formData.duration_seconds.toString()),
                 source_description: formData.source_description,
                 quality_level: formData.quality_level,
@@ -368,6 +395,11 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 is_published: formData.is_published,
                 is_featured: formData.is_featured,
             };
+
+            // Ensure archival_id is populated (Optional for user, Required for DB)
+            if (!payload.archival_id) {
+                payload.archival_id = initialData?.archival_id || `REC-${Date.now()}`;
+            }
 
             let recordingId = initialData?.id;
 
@@ -380,9 +412,7 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                 if (error) throw error;
             } else {
                 // Create
-                if (!payload.archival_id) {
-                    payload.archival_id = `REC-${Date.now()}`;
-                }
+
 
                 const { data, error } = await supabase
                     .from("recordings")
@@ -565,6 +595,9 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
                 {/* Quran Content (Multi-Segment) */}
                 <div className="space-y-4">
+
+
+
                     <div className="flex justify-between items-center border-b pb-2">
                         <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني</h3>
                         <button
@@ -660,8 +693,14 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                             <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">السنة</label>
-                            <input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || 0 })} className="w-full p-2 border rounded dark:bg-slate-700" />
+                            <label className="block text-sm font-medium mb-1">الفترة الزمنية</label>
+                            <input
+                                type="text"
+                                value={formData.time_period}
+                                onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
+                                className="w-full p-2 border rounded dark:bg-slate-700"
+                                placeholder="مثال: 1960، 1950-1960، أوائل الستينات"
+                            />
                         </div>
                     </div>
 
@@ -690,6 +729,20 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                             </select>
                         </div>
                     </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <label className="block text-sm font-medium mb-1">الاسم الكامل للتلاوة (اختياري)</label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className="w-full p-2 border rounded dark:bg-slate-700 placeholder-slate-400 text-sm"
+                            placeholder="مثال: حفص عن عاصم - سورة الفاتحة (يترك فارغاً لاستخدام الاسم الافتراضي)"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                            يظهر هذا الاسم بدلاً من (سورة + رقم)، مع عرض التفاصيل الأصلية كعنوان فرعي.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Source & File */}
@@ -697,7 +750,7 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                     <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">المصدر والملف</h3>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Archival ID</label>
+                        <label className="block text-sm font-medium mb-1">Archival ID (اختياري)</label>
                         <input type="text" value={formData.archival_id} onChange={(e) => setFormData({ ...formData, archival_id: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" placeholder="e.g. MIN-MUR-001..." />
                     </div>
 
@@ -755,17 +808,17 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
             </div>
 
             <div className="flex items-center gap-6 pt-4">
-                <label className={`flex items-center gap-2 ${!formData.archival_id || !formData.reciter_id || !formData.section_id || !formData.city || !formData.year || !formData.source_description ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                <label className={`flex items-center gap-2 ${!isFormValid ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                     <input
                         type="checkbox"
                         checked={formData.is_published}
                         onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                        disabled={!formData.archival_id || !formData.reciter_id || !formData.section_id || !formData.city || !formData.year || !formData.source_description}
+                        disabled={!isFormValid}
                         className="w-5 h-5 text-emerald-600 rounded"
                     />
                     <div>
                         <span className="font-bold block">نشر التسجيل (Publish)</span>
-                        {(!formData.archival_id || !formData.reciter_id || !formData.section_id || !formData.city || !formData.year || !formData.source_description) && (
+                        {!isFormValid && (
                             <span className="text-xs text-red-500 block">لا يمكن النشر قبل استكمال البيانات الأساسية</span>
                         )}
                     </div>

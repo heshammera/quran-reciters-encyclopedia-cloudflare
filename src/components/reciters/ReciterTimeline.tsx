@@ -95,27 +95,17 @@ export default function ReciterTimeline({ recordings }: ReciterTimelineProps) {
                                                     </h4>
                                                     {!isLean && (
                                                         <>
-                                                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-2">
-                                                                {rec.section?.name_ar}
-                                                            </p>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 font-mono">
-                                                                (الآيات {rec.ayah_start} - {rec.ayah_end})
-                                                            </p>
+                                                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2 font-mono">
+                                                                {rec.title && <span>سورة {rec.surah_number} - </span>}
+                                                                <span>(الآيات {rec.ayah_start} - {rec.ayah_end})</span>
+                                                                {rec.city && <span> • {rec.city}</span>}
+                                                            </div>
                                                         </>
                                                     )}
                                                 </Link>
 
-                                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                                                    {rec.city && (
-                                                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/50 px-2 py-1 rounded">
-                                                            📍 {rec.city}
-                                                        </span>
-                                                    )}
-                                                    {rec.recording_date.approximate && !isLean && (
-                                                        <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded">
-                                                            ⚠️ تقريبي
-                                                        </span>
-                                                    )}
+                                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 opacity-60">
+                                                    {rec.section?.name_ar}
                                                 </div>
                                             </div>
 
