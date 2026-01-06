@@ -86,6 +86,23 @@ export default function VideoGallery({ videos, onPlay }: VideoGalleryProps) {
                             )}
                         </div>
 
+                        {/* Ayah Range / Coverage */}
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {video.recording_coverage && video.recording_coverage.length > 0 ? (
+                                video.recording_coverage.map((seg: any, idx: number) => (
+                                    <span key={idx} className="text-[10px] bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400">
+                                        {SURAHS.find(s => s.number === seg.surah_number)?.name} ({seg.ayah_start}-{seg.ayah_end})
+                                    </span>
+                                ))
+                            ) : (
+                                video.surah_number && (
+                                    <span className="text-[10px] bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400">
+                                        {SURAHS.find(s => s.number === video.surah_number)?.name} ({video.ayah_start}-{video.ayah_end})
+                                    </span>
+                                )
+                            )}
+                        </div>
+
                         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700 pt-3">
                             <span className="flex items-center gap-1">
                                 📅 {video.recording_date?.year || 'غير مؤرخ'}

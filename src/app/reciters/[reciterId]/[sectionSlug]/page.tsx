@@ -149,17 +149,27 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                                     )}
 
                                     {/* Info */}
-                                    <div className="flex-1 min-w-0">
+                                    <Link href={`/recordings/${recording.id}`} className="flex-1 min-w-0 block hover:no-underline">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                                     {recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام')}
                                                 </span>
-                                                {recording.surah_number && (
-                                                    <span className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                                                        {recording.title && <span>سورة {getSurahName(recording.surah_number)} - </span>}
-                                                        (الآيات {recording.ayah_start}-{recording.ayah_end})
-                                                    </span>
+                                                {recording.recording_coverage && recording.recording_coverage.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {recording.recording_coverage.map((seg: any, idx: number) => (
+                                                            <span key={idx} className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                                                سورة {getSurahName(seg.surah_number)} ({seg.ayah_start}-{seg.ayah_end})
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    recording.surah_number && (
+                                                        <span className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                                            {recording.title && <span>سورة {getSurahName(recording.surah_number)} - </span>}
+                                                            (الآيات {recording.ayah_start}-{recording.ayah_end})
+                                                        </span>
+                                                    )
                                                 )}
                                             </div>
                                             {isVideo && (
@@ -177,7 +187,7 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                                                 </span>
                                             )}
                                         </div>
-                                    </div>
+                                    </Link>
 
                                     {/* Actions */}
                                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">

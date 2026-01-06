@@ -72,7 +72,8 @@ export async function getRecordings(reciterId: string, sectionId: string, phaseI
         .from("recordings")
         .select(`
             *,
-            media_files (*)
+            media_files (*),
+            recording_coverage (*)
         `)
         .eq("reciter_id", reciterId)
         .eq("section_id", sectionId)
@@ -147,8 +148,10 @@ export async function getSimilarRecordings(recordingId: string, surahNumber: num
         .from("recordings")
         .select(`
             *,
-            reciter:reciters(name_ar, image_url),
-            section:sections(name_ar)
+            reciter:reciters(id, name_ar, image_url),
+            section:sections(name_ar),
+            media_files(archive_url),
+            recording_coverage(*)
         `)
         .eq("surah_number", surahNumber)
         .neq("id", recordingId)
@@ -172,11 +175,14 @@ export async function getReciterTimeline(reciterId: string) {
             recording_date,
             created_at,
             section:sections(name_ar, slug),
-            media_files(archive_url)
+            media_files(archive_url),
+            recording_coverage(*),
+            type,
+            video_url,
+            video_thumbnail
         `)
         .eq("reciter_id", reciterId)
         .eq("is_published", true)
-        .eq("type", "audio")
         // We want to order by date.
         // Since recording_date is JSONB, we can't easily sort by it in simple PostgREST without a computed column.
         // For now, let's fetch all and sort in JS, or sort by created_at as fallback.
@@ -193,7 +199,8 @@ export async function getReciterVideos(reciterId: string) {
         .select(`
             *,
             section:sections(name_ar),
-            reciter:reciters(name_ar)
+            reciter:reciters(name_ar),
+            recording_coverage(*)
         `)
         .eq("reciter_id", reciterId)
         .eq("is_published", true)

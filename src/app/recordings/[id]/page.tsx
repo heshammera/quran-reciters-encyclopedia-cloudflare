@@ -68,7 +68,9 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
         sectionSlug: recording.section.slug,
     })).filter(t => t.src);
 
-    const similarRecordings = await getSimilarRecordings(recording.id, recording.surah_number);
+    // Determine primary surah for similarity search
+    const primarySurah = recording.surah_number || recording.recording_coverage?.[0]?.surah_number;
+    const similarRecordings = primarySurah ? await getSimilarRecordings(recording.id, primarySurah) : [];
 
     // Construct display title for the page
     let displayTitle = recording.title;
@@ -272,7 +274,7 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                         <div className="pt-8">
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
                                 <span className="text-emerald-500">✨</span>
-                                تلاوات أخرى لنفس السورة
+                                {primarySurah ? `تلاوات أخرى لسورة ${getSurahName(primarySurah)}` : 'تلاوات مقترحة'}
                             </h2>
 
                             {similarRecordings.length > 0 ? (
@@ -295,10 +297,20 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded">
-                                                                سورة {getSurahName(sim.surah_number)} ({sim.ayah_start} - {sim.ayah_end})
-                                                            </span>
+                                                        <div className="flex items-center flex-wrap gap-2 mb-1">
+                                                            {sim.recording_coverage && sim.recording_coverage.length > 0 ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {sim.recording_coverage.map((seg: any, sIdx: number) => (
+                                                                        <span key={sIdx} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded">
+                                                                            سورة {getSurahName(seg.surah_number)} ({seg.ayah_start}-{seg.ayah_end})
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded">
+                                                                    سورة {getSurahName(sim.surah_number)} ({sim.ayah_start} - {sim.ayah_end})
+                                                                </span>
+                                                            )}
                                                             <span className="text-xs text-slate-500 dark:text-slate-300">
                                                                 {sim.section?.name_ar}
                                                             </span>

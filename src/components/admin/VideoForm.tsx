@@ -22,7 +22,7 @@ export default function VideoForm({ reciters, sections, phases = [], initialData
 
     const [formData, setFormData] = useState({
         video_url: initialData?.video_url || "",
-        title: "", // Not used in DB but helpful for UI
+        title: initialData?.title || "",
         reciter_id: initialData?.reciter_id || "",
         section_id: initialData?.section_id || "",
         surah_number: initialData?.surah_number || 1,
@@ -36,6 +36,50 @@ export default function VideoForm({ reciters, sections, phases = [], initialData
         is_published: initialData?.is_published ?? true,
         is_featured: initialData?.is_featured ?? false,
     });
+
+    const [segments, setSegments] = useState<{ surah: number, start: number, end: number }[]>(
+        initialData?.recording_coverage?.length > 0
+            ? initialData.recording_coverage.map((s: any) => ({ surah: s.surah_number, start: s.ayah_start, end: s.ayah_end }))
+            : [{ surah: initialData?.surah_number || 1, start: initialData?.ayah_start || 1, end: initialData?.ayah_end || 7 }]
+    );
+
+    const updateSegment = (index: number, field: 'surah' | 'start' | 'end', value: number) => {
+        const newSegments = [...segments];
+        const seg = newSegments[index];
+
+        if (field === 'surah') {
+            const surah = SURAHS.find(s => s.number === value);
+            seg.surah = value;
+            seg.start = 1;
+            seg.end = surah ? surah.ayahCount : 1;
+        } else if (field === 'start') {
+            seg.start = value;
+            if (seg.end < value) seg.end = value;
+        } else if (field === 'end') {
+            seg.end = value;
+        }
+
+        setSegments(newSegments);
+
+        // Update main fields if it's the first segment
+        if (index === 0) {
+            setFormData(prev => ({
+                ...prev,
+                surah_number: field === 'surah' ? value : prev.surah_number,
+                ayah_start: field === 'start' ? value : prev.ayah_start,
+                ayah_end: field === 'end' ? value : prev.ayah_end,
+            }));
+        }
+    };
+
+    const addSegment = () => {
+        setSegments([...segments, { surah: 1, start: 1, end: 7 }]);
+    };
+
+    const removeSegment = (index: number) => {
+        if (segments.length === 1) return;
+        setSegments(segments.filter((_, i) => i !== index));
+    };
 
     const [videoMeta, setVideoMeta] = useState<{ id: string; thumb: string; source: 'youtube' | 'archive' } | null>(
         initialData?.video_url ? extractMeta(initialData.video_url) : null
@@ -115,17 +159,48 @@ export default function VideoForm({ reciters, sections, phases = [], initialData
                 archival_id: initialData?.archival_id || `VID-${videoMeta.id}-${Date.now()}`,
             };
 
-            let query = supabase.from('recordings');
-
+            let recordingId: string;
             if (isEdit) {
-                const { error: submitError } = await query
+                const { error: submitError } = await supabase
+                    .from('recordings')
                     .update(payload)
                     .eq('id', initialData.id);
                 if (submitError) throw submitError;
+                recordingId = initialData.id;
             } else {
-                const { error: submitError } = await query
-                    .insert(payload);
+                const { data: newRec, error: submitError } = await supabase
+                    .from('recordings')
+                    .insert(payload)
+                    .select()
+                    .single();
                 if (submitError) throw submitError;
+                recordingId = newRec.id;
+            }
+
+            // Sync Coverage (Recording Segments)
+            if (recordingId) {
+                // Remove old coverage if edit
+                if (isEdit) {
+                    await supabase
+                        .from("recording_coverage")
+                        .delete()
+                        .eq("recording_id", recordingId);
+                }
+
+                // Insert segments
+                const coveragePayload = segments.map((seg, idx) => ({
+                    recording_id: recordingId,
+                    surah_number: seg.surah,
+                    ayah_start: seg.start,
+                    ayah_end: seg.end,
+                    display_order: idx
+                }));
+
+                const { error: coverageError } = await supabase
+                    .from("recording_coverage")
+                    .insert(coveragePayload);
+
+                if (coverageError) throw coverageError;
             }
 
             router.push('/admin/videos');
@@ -208,43 +283,65 @@ export default function VideoForm({ reciters, sections, phases = [], initialData
                 </div>
 
                 {/* Surah */}
-                <div>
-                    <label className="block text-sm font-medium mb-2">السورة</label>
-                    <select
-                        value={formData.surah_number}
-                        onChange={(e) => setFormData({ ...formData, surah_number: Number(e.target.value) })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
-                    >
-                        {SURAHS.map((s) => (
-                            <option key={s.number} value={s.number}>
-                                {s.number}. {s.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                {/* Quran Content (Multi-Segment) */}
+                <div className="space-y-4 border-t pt-6">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني (السور والآيات)</h3>
+                        <button
+                            type="button"
+                            onClick={addSegment}
+                            className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full font-bold transition-colors"
+                        >
+                            + إضافة مقطع
+                        </button>
+                    </div>
 
-                {/* Ayah Range */}
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium mb-2">من آية</label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={formData.ayah_start}
-                            onChange={(e) => setFormData({ ...formData, ayah_start: Number(e.target.value) })}
-                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium mb-2">إلى آية</label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={formData.ayah_end}
-                            onChange={(e) => setFormData({ ...formData, ayah_end: Number(e.target.value) })}
-                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
-                        />
-                    </div>
+                    {segments.map((seg, index) => (
+                        <div key={index} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl relative group/seg border border-slate-200 dark:border-slate-700">
+                            {segments.length > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => removeSegment(index)}
+                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 opacity-0 group-hover/seg:opacity-100 transition-opacity shadow-sm"
+                                >
+                                    ×
+                                </button>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium mb-1 text-slate-500">السورة</label>
+                                    <select
+                                        value={seg.surah}
+                                        onChange={(e) => updateSegment(index, 'surah', Number(e.target.value))}
+                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                    >
+                                        {SURAHS.map(s => <option key={s.number} value={s.number}>{s.number}. {s.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium mb-1 text-slate-500">من آية</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={seg.start}
+                                        onChange={(e) => updateSegment(index, 'start', Number(e.target.value))}
+                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium mb-1 text-slate-500">إلى آية</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={seg.end}
+                                        onChange={(e) => updateSegment(index, 'end', Number(e.target.value))}
+                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {/* Year/Period */}

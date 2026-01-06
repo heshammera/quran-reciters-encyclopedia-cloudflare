@@ -145,7 +145,11 @@ export default async function ReciterPage({ params, searchParams }: ReciterPageP
                                         src: t.media_files?.[0]?.archive_url || '',
                                         city: t.city,
                                         duration: t.duration,
-                                        reciterId: reciter.id
+                                        reciterId: reciter.id,
+                                        recording_coverage: t.recording_coverage,
+                                        type: t.type,
+                                        videoUrl: t.video_url,
+                                        videoThumbnail: t.video_thumbnail
                                     }))}
                                 />
                             </div>
