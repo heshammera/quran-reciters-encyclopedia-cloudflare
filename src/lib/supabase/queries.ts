@@ -136,13 +136,8 @@ export async function getRecording(id: string) {
     return data;
 }
 
-export async function getSimilarRecordings(recordingId: string, surahNumber: number, limit = 6) {
-    // Logic: Find other recordings of the same Surah, excluding the current one.
-    // Order by 'rarity' or 'views' (if we had specific view counts) or just random/latest.
-    // For now, let's just get others from different reciters if possible, or same reciter if not.
-
-    // We can't easily do "distinct reciter" in simple supabase query without RPC.
-    // So we'll just fetch a batch and filter/display.
+export async function getSimilarRecordings(recordingId: string, surahNumbers: number[], limit = 6) {
+    // Logic: Find other recordings of the same Surahs, excluding the current one.
 
     const { data } = await supabase
         .from("recordings")
@@ -153,7 +148,7 @@ export async function getSimilarRecordings(recordingId: string, surahNumber: num
             media_files(archive_url),
             recording_coverage(*)
         `)
-        .eq("surah_number", surahNumber)
+        .in("surah_number", surahNumbers)
         .neq("id", recordingId)
         .eq("is_published", true)
         .order("created_at", { ascending: false })

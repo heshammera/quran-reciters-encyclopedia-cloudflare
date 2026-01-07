@@ -33,10 +33,10 @@ export default function QueueButton({ track, tracks, variant = "outline", size =
     const sizeClasses = size === "sm" ? "p-1.5 text-xs" : "p-2 text-sm";
 
     const variantClasses = {
-        icon: "text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400 p-2",
-        ghost: "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors",
-        outline: "border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-slate-600 dark:text-slate-400 rounded-lg transition-all",
-        solid: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg font-bold"
+        icon: "text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 rounded-full transition-all p-2",
+        ghost: "text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 border border-emerald-100/50 dark:border-emerald-800/30 rounded-lg transition-colors shadow-sm",
+        outline: "border border-slate-300 dark:border-slate-600 hover:border-emerald-500 text-slate-700 dark:text-slate-300 hover:text-emerald-600 rounded-lg transition-all",
+        solid: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg rounded-lg font-bold transition-all transform hover:-translate-y-0.5"
     };
 
     return (

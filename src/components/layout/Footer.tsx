@@ -6,14 +6,15 @@ export default function Footer() {
     return (
         <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 font-sans">
             {/* Main Footer Content */}
-            <div className="container mx-auto px-4 py-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {/* Main Footer Content */}
+            <div className="container mx-auto px-4 py-8 md:py-16">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
 
-                    {/* Column 1: Brand & About */}
-                    <div className="space-y-6">
+                    {/* Column 1: Brand & About - Spans 2 cols on mobile for readability */}
+                    <div className="col-span-2 md:col-span-1 space-y-4 md:space-y-6">
                         <div className="flex items-center gap-2">
-                            <span className="text-3xl">🎙️</span>
-                            <span className="font-bold text-2xl text-white">موسوعة القرّاء</span>
+                            <span className="text-2xl md:text-3xl">🎙️</span>
+                            <span className="font-bold text-xl md:text-2xl text-white">موسوعة القرّاء</span>
                         </div>
                         <p className="text-slate-400 leading-relaxed text-sm">
                             أضخم أرشيف رقمي مفتوح المصدر لتوثيق تلاوات عمالقة القراء في العالم الإسلامي. نسعى لحفظ التراث الصوتي القرآني وتقديمه بأعلى جودة.
@@ -32,54 +33,29 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Column 2: Discover */}
-                    <div className="space-y-6">
+                    {/* Column 2: Discover - Fits in 1 col on mobile */}
+                    <div className="space-y-4 md:space-y-6">
                         <h3 className="text-lg font-bold text-white relative inline-block">
-                            اكتشف الموسوعة
-                            <span className="absolute -bottom-2 right-0 w-12 h-1 bg-emerald-500 rounded-full"></span>
+                            اكتشف
+                            <span className="absolute -bottom-2 right-0 w-8 h-1 bg-emerald-500 rounded-full"></span>
                         </h3>
-                        <ul className="space-y-4 text-sm">
-                            <li><Link href="/reciters" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>👤</span> جميع القراء</Link></li>
-                            <li><Link href="/collections" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>📂</span> المجموعات المختارة</Link></li>
-                            <li><Link href="/search" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>🔍</span> البحث المتقدم</Link></li>
-                            <li><Link href="/session" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>🎧</span> جلسة استماع</Link></li>
+                        <ul className="space-y-3 md:space-y-4 text-sm">
+                            <li><Link href="/reciters" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>👤</span> القراء</Link></li>
+                            <li><Link href="/collections" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>📂</span> المجموعات</Link></li>
+                            <li><Link href="/session" className="hover:text-emerald-400 transition-colors flex items-center gap-2"><span>🎧</span> جلسة</Link></li>
                         </ul>
                     </div>
 
-                    {/* Column 3: Resources */}
-                    <div className="space-y-6">
+                    {/* Column 3: Resources - Fits in 1 col on mobile */}
+                    <div className="space-y-4 md:space-y-6">
                         <h3 className="text-lg font-bold text-white relative inline-block">
-                            موارد مفيدة
-                            <span className="absolute -bottom-2 right-0 w-12 h-1 bg-emerald-500 rounded-full"></span>
+                            موارد
+                            <span className="absolute -bottom-2 right-0 w-8 h-1 bg-emerald-500 rounded-full"></span>
                         </h3>
-                        <ul className="space-y-4 text-sm">
-                            <li><Link href="/developers" className="hover:text-emerald-400 transition-colors">API المطورين</Link></li>
-                            <li><Link href="/changelog" className="hover:text-emerald-400 transition-colors">سجل التحديثات</Link></li>
+                        <ul className="space-y-3 md:space-y-4 text-sm">
                             <li><Link href="/about" className="hover:text-emerald-400 transition-colors">عن المشروع</Link></li>
-                            <li><Link href="/donate" className="hover:text-emerald-400 transition-colors">ادعم الاستمرارية</Link></li>
+                            <li><Link href="/donate" className="hover:text-emerald-400 transition-colors">ادعمنا</Link></li>
                         </ul>
-                    </div>
-
-                    {/* Column 4: Newsletter/Updates (Visual only) */}
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-bold text-white relative inline-block">
-                            ابق على تواصل
-                            <span className="absolute -bottom-2 right-0 w-12 h-1 bg-emerald-500 rounded-full"></span>
-                        </h3>
-                        <p className="text-sm text-slate-400">
-                            لا تفوت جديد التلاوات النادرة. انضم للقائمة البريدية (قريباً).
-                        </p>
-                        <div className="relative">
-                            <input
-                                type="email"
-                                placeholder="بريدك الإلكتروني"
-                                disabled
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors cursor-not-allowed opacity-70"
-                            />
-                            <button disabled className="absolute left-2 top-2 bottom-2 px-3 bg-emerald-600 text-white rounded-md text-xs font-bold opacity-50 cursor-not-allowed">
-                                اشتراك
-                            </button>
-                        </div>
                     </div>
 
                 </div>

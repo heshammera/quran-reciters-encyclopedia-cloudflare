@@ -68,9 +68,16 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
         sectionSlug: recording.section.slug,
     })).filter(t => t.src);
 
-    // Determine primary surah for similarity search
-    const primarySurah = recording.surah_number || recording.recording_coverage?.[0]?.surah_number;
-    const similarRecordings = primarySurah ? await getSimilarRecordings(recording.id, primarySurah) : [];
+    // Determine all surahs for similarity search
+    const surahNumbers = new Set<number>();
+    if (recording.surah_number) surahNumbers.add(recording.surah_number);
+    if (recording.recording_coverage) {
+        recording.recording_coverage.forEach((c: any) => {
+            if (c.surah_number) surahNumbers.add(c.surah_number);
+        });
+    }
+    const uniqueSurahArray = Array.from(surahNumbers);
+    const similarRecordings = uniqueSurahArray.length > 0 ? await getSimilarRecordings(recording.id, uniqueSurahArray) : [];
 
     // Construct display title for the page
     let displayTitle = recording.title;
@@ -274,7 +281,7 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                         <div className="pt-8">
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
                                 <span className="text-emerald-500">✨</span>
-                                {primarySurah ? `تلاوات أخرى لسورة ${getSurahName(primarySurah)}` : 'تلاوات مقترحة'}
+                                {uniqueSurahArray.length === 1 ? `تلاوات أخرى لسورة ${getSurahName(uniqueSurahArray[0])}` : 'تلاوات مشابهة'}
                             </h2>
 
                             {similarRecordings.length > 0 ? (
