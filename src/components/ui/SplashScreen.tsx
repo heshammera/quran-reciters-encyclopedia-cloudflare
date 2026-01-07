@@ -46,86 +46,129 @@ export default function SplashScreen() {
         <AnimatePresence>
             {isVisible && (
                 <motion.div
-                    initial={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                    className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center text-center p-4"
+                    transition={{ duration: 1, ease: "easeInOut" }}
+                    className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center overflow-hidden"
                 >
-                    {/* Premium Animated Logo Container */}
-                    <div className="relative mb-12 flex items-center justify-center">
+                    {/* Background: Geometric Pattern Overlay */}
+                    <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] bg-repeat mix-blend-overlay pointer-events-none" />
 
-                        {/* 1. Deep Glow (Background) - Intensified */}
-                        <div className="absolute inset-0 bg-emerald-500/50 blur-[60px] rounded-full animate-pulse"></div>
-
-                        {/* 2. Rotating Outer Ring - Thicker & Brighter */}
+                    {/* Background: Floating Particles */}
+                    {[...Array(20)].map((_, i) => (
                         <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                            className="absolute w-52 h-52 rounded-full border-2 border-dashed border-emerald-400/60 dark:border-emerald-300/40"
-                        />
-
-                        {/* 3. Counter-Rotating Inner Ring (Gold Accent) - Thicker & Brighter */}
-                        <motion.div
-                            animate={{ rotate: -360 }}
-                            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                            className="absolute w-44 h-44 rounded-full border-2 border-dotted border-amber-400/60 dark:border-amber-300/50"
-                        />
-
-                        {/* 4. Ripple Effects - More Visible */}
-                        <motion.div
-                            animate={{ scale: [1, 2], opacity: [0.3, 0] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
-                            className="absolute inset-0 bg-emerald-400/20 rounded-full z-0"
-                        />
-
-                        {/* 5. Main Logo Circle - Intense Glow */}
-                        <motion.div
+                            key={i}
+                            className="absolute rounded-full bg-amber-400/20 blur-sm"
+                            initial={{
+                                x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+                                y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
+                                scale: Math.random() * 0.5 + 0.5,
+                            }}
                             animate={{
-                                scale: [1, 1.05, 1],
-                                boxShadow: [
-                                    "0 0 30px rgba(16, 185, 129, 0.4)",
-                                    "0 0 60px rgba(16, 185, 129, 0.6)",
-                                    "0 0 30px rgba(16, 185, 129, 0.4)"
-                                ]
+                                y: [null, Math.random() * -100],
+                                opacity: [0, 0.5, 0],
                             }}
                             transition={{
-                                duration: 3,
+                                duration: Math.random() * 5 + 5,
                                 repeat: Infinity,
-                                ease: "easeInOut"
+                                ease: "linear"
                             }}
-                            className="relative z-10 w-32 h-32 md:w-40 md:h-40 bg-white rounded-full overflow-hidden flex items-center justify-center border-4 border-emerald-100 shadow-2xl"
+                            style={{
+                                width: Math.random() * 4 + 2 + "px",
+                                height: Math.random() * 4 + 2 + "px",
+                            }}
+                        />
+                    ))}
+
+                    <div className="relative mb-16 flex items-center justify-center">
+                        {/* 1. Core Glow */}
+                        <div className="absolute inset-0 bg-emerald-600/30 blur-[80px] rounded-full animate-pulse"></div>
+
+                        {/* 2. Golden Ornamental Ring (SVG) - Rotating Clockwise */}
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                            className="absolute"
                         >
+                            <svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="110" cy="110" r="108" stroke="url(#gold_gradient)" strokeWidth="1" strokeDasharray="4 4" />
+                                <defs>
+                                    <linearGradient id="gold_gradient" x1="0" y1="0" x2="220" y2="220">
+                                        <stop offset="0%" stopColor="#CA8A04" />
+                                        <stop offset="50%" stopColor="#FCD34D" />
+                                        <stop offset="100%" stopColor="#CA8A04" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </motion.div>
+
+                        {/* 3. Emerald Geometric Ring (SVG) - Rotating Counter-Clockwise */}
+                        <motion.div
+                            animate={{ rotate: -360 }}
+                            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                            className="absolute"
+                        >
+                            <svg width="190" height="190" viewBox="0 0 190 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="95" cy="95" r="94" stroke="#10B981" strokeWidth="0.5" strokeOpacity="0.5" />
+                                <path d="M95 5 L95 15 M95 175 L95 185 M5 95 L15 95 M175 95 L185 95" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                        </motion.div>
+
+                        {/* 4. Logo Container with Shimmer Effect - White Background */}
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="relative z-10 w-36 h-36 bg-white rounded-full border-4 border-emerald-50 shadow-2xl flex items-center justify-center p-4 overflow-hidden"
+                        >
+                            {/* Inner Glow/Shadow for depth */}
+                            <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] rounded-full z-20 pointer-events-none"></div>
+
+                            {/* Logo */}
                             <img
                                 src="/logo.png"
-                                alt="موسوعة القراء"
-                                className="w-full h-full object-contain p-3"
+                                alt="Logo"
+                                className="relative z-10 w-full h-full object-contain"
+                            />
+
+                            {/* Shimmer Sweep Animation */}
+                            <motion.div
+                                animate={{ left: ["-100%", "200%"] }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
+                                className="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 z-20 pointer-events-none"
                             />
                         </motion.div>
                     </div>
 
-                    {/* Rotating Adhkar */}
-                    <div className="h-24 flex items-center justify-center">
+                    {/* Adhkar Section - Elegant Typography */}
+                    <div className="h-20 flex items-center justify-center px-6">
                         <AnimatePresence mode="wait">
-                            <motion.p
+                            <motion.div
                                 key={adhkarIndex}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.5 }}
-                                className="text-emerald-400/90 text-xl md:text-2xl font-medium font-serif leading-relaxed px-4"
+                                initial={{ opacity: 0, y: 15, filter: "blur(5px)" }}
+                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                exit={{ opacity: 0, y: -15, filter: "blur(5px)" }}
+                                transition={{ duration: 0.8 }}
+                                className="text-center"
                             >
-                                {ADHKAR[adhkarIndex]}
-                            </motion.p>
+                                <p className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-white to-emerald-200 text-xl md:text-2xl font-medium font-serif leading-relaxed tracking-wide drop-shadow-md">
+                                    {ADHKAR[adhkarIndex]}
+                                </p>
+                                <div className="mx-auto mt-2 w-12 h-0.5 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent rounded-full" />
+                            </motion.div>
                         </AnimatePresence>
                     </div>
 
-                    {/* Loading Bar */}
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: "200px" }}
-                        transition={{ duration: 4.5, ease: "linear" }}
-                        className="absolute bottom-10 h-1 bg-gradient-to-r from-emerald-900 via-emerald-500 to-emerald-900 rounded-full opacity-50"
-                    />
+                    {/* Simple Elegant Progress Line */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-900">
+                        <motion.div
+                            initial={{ width: "0%" }}
+                            animate={{ width: "100%" }}
+                            transition={{ duration: 3.5, ease: "easeInOut" }}
+                            className="h-full bg-gradient-to-r from-slate-900 via-emerald-500 to-slate-900"
+                        />
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

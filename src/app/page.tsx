@@ -59,7 +59,7 @@ async function getLatestRecordings() {
     `)
     .eq("is_published", true)
     .order("created_at", { ascending: false })
-    .limit(8);
+    .limit(5);
 
   if (error) {
     console.error("Error fetching latest recordings:", error);
