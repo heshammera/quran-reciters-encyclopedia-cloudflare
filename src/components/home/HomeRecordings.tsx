@@ -24,33 +24,35 @@ export default function HomeRecordings({ featured, latest }: { featured: any[], 
                             href={`/recordings/${recording.id}`}
                             className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-all group ${isLean ? 'p-3 rounded-lg shadow-sm' : 'p-5 rounded-xl hover:border-emerald-500 hover:shadow-md'}`}
                         >
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-start gap-4 h-full">
                                 {!isLean && (
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0">
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0 mt-1">
                                         📜
                                     </div>
                                 )}
-                                <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                                    <div>
-                                        <p className={`font-bold text-slate-900 dark:text-white transition-colors truncate ${isLean ? 'text-sm group-active:text-emerald-600' : 'group-hover:text-emerald-600'}`}>
-                                            {recording.reciters?.name_ar}
-                                        </p>
-                                        <p className="text-xs text-slate-500 truncate">
-                                            {recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام')} {recording.city && `• ${recording.city}`}
-                                        </p>
-                                    </div>
-                                    <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <QueueButton
-                                            variant="icon"
-                                            track={{
-                                                id: recording.id,
-                                                title: recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام'),
-                                                reciterName: recording.reciters?.name_ar,
-                                                src: recording.media_files?.[0]?.archive_url || "",
-                                                surahNumber: recording.surah_number,
-                                                reciterId: recording.reciters?.id,
-                                            }}
-                                        />
+                                <div className="flex-1 min-w-0 flex flex-col justify-between h-full gap-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="space-y-1">
+                                            <p className={`font-bold text-slate-900 dark:text-white transition-colors leading-snug ${isLean ? 'text-sm group-active:text-emerald-600' : 'group-hover:text-emerald-600'}`}>
+                                                {recording.reciters?.name_ar}
+                                            </p>
+                                            <p className="text-xs text-slate-500 leading-relaxed">
+                                                {recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام')} {recording.city && `• ${recording.city}`}
+                                            </p>
+                                        </div>
+                                        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+                                            <QueueButton
+                                                variant="icon"
+                                                track={{
+                                                    id: recording.id,
+                                                    title: recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام'),
+                                                    reciterName: recording.reciters?.name_ar,
+                                                    src: recording.media_files?.[0]?.archive_url || "",
+                                                    surahNumber: recording.surah_number,
+                                                    reciterId: recording.reciters?.id,
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

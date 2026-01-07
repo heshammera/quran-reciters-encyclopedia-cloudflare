@@ -202,18 +202,20 @@ export default async function ReciterPage({ params, searchParams }: ReciterPageP
                                                 <Link
                                                     key={section.id}
                                                     href={`/reciters/${reciter.id}/${section.slug}`}
-                                                    className="group"
+                                                    className="group block h-full"
                                                 >
-                                                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600">
-                                                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors mb-2">
-                                                            {section.name_ar}
-                                                        </h3>
-                                                        {section.description_ar && (
-                                                            <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
-                                                                {section.description_ar}
-                                                            </p>
-                                                        )}
-                                                        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                                                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 h-full flex flex-col">
+                                                        <div className="flex-1">
+                                                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors mb-2">
+                                                                {section.name_ar}
+                                                            </h3>
+                                                            {section.description_ar && (
+                                                                <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
+                                                                    {section.description_ar}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 mt-auto pt-4 border-t border-slate-100 dark:border-slate-700/50">
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                             </svg>
