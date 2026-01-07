@@ -47,7 +47,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans transition-colors duration-300 bg-background text-foreground">
         <Suspense fallback={null}>
-          <SplashScreen />
+          {!isAdmin && <SplashScreen />}
         </Suspense>
         {!isAdmin && <DonationBanner />}
         <LeanModeProvider>
