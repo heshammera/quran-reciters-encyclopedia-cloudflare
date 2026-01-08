@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
 import { getLastPosition } from "@/lib/history-utils";
 import { formatTime } from "@/lib/utils";
+import { formatDualYear } from "@/lib/date-utils";
 
 interface RecordingItemProps {
     recording: any;
@@ -99,7 +100,7 @@ export default function RecordingItem({
                             )}
 
                             <div className="flex items-center gap-3 mt-1 text-sm text-slate-700 dark:text-slate-300">
-                                {recording.recording_date?.year && <span>📅 {recording.recording_date.year}</span>}
+                                {recording.recording_date?.year && <span>📅 {formatDualYear(recording.recording_date.year)}</span>}
                                 {recording.city && <span>📍 {recording.city}</span>}
                                 {recording.reciter_phases?.phase_name_ar && (
                                     <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded">

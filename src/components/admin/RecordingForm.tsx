@@ -848,13 +848,13 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
                             <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">الفترة الزمنية</label>
+                            <label className="block text-sm font-medium mb-1">الفترة الزمنية (السنة الميلادية)</label>
                             <input
                                 type="text"
                                 value={formData.time_period}
                                 onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
                                 className="w-full p-2 border rounded dark:bg-slate-700"
-                                placeholder="مثال: 1960، 1950-1960، أوائل الستينات"
+                                placeholder="مثال: 1985"
                             />
                         </div>
                     </div>

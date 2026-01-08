@@ -1,8 +1,7 @@
-"use client";
-
 import { useState } from "react";
 import { SURAHS } from "@/lib/quran/metadata";
 import { useLeanMode } from "@/context/LeanModeContext";
+import { formatDualYear } from "@/lib/date-utils";
 
 interface VideoGalleryProps {
     videos: any[];
@@ -105,7 +104,7 @@ export default function VideoGallery({ videos, onPlay }: VideoGalleryProps) {
 
                         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700 pt-3">
                             <span className="flex items-center gap-1">
-                                📅 {video.recording_date?.year || 'غير مؤرخ'}
+                                📅 {formatDualYear(video.recording_date?.year) || 'غير مؤرخ'}
                             </span>
                             {video.city && (
                                 <span className="flex items-center gap-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from "react";
 import { Track, PlayerState, Action } from "@/types/player";
 
 const initialState: PlayerState = {
@@ -15,6 +15,7 @@ const initialState: PlayerState = {
     shuffle: false,
     isMinimized: false,
     activeDownloads: [],
+    analyserNode: null,
 };
 
 function playerReducer(state: PlayerState, action: Action): PlayerState {
@@ -181,6 +182,18 @@ function playerReducer(state: PlayerState, action: Action): PlayerState {
                 ...state,
                 activeDownloads: state.activeDownloads.filter(url => url !== action.payload)
             };
+        case "SET_ANALYSER":
+            return {
+                ...state,
+                analyserNode: action.payload
+            };
+        case "HYDRATE_STATE":
+            return {
+                ...state,
+                ...action.payload,
+                isPlaying: false, // Don't autoplay on refresh
+                analyserNode: null // Don't persist analyser
+            };
         default:
             return state;
     }
@@ -191,8 +204,37 @@ export const PlayerContext = createContext<{
     dispatch: React.Dispatch<Action>;
 } | null>(null);
 
+const STORAGE_KEY = "quran_player_state";
+
 export function PlayerProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(playerReducer, initialState);
+
+    // Initial load
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                dispatch({ type: "HYDRATE_STATE", payload: parsed });
+            } catch (e) {
+                console.error("Failed to parse player state", e);
+            }
+        }
+    }, []);
+
+    // Save changes
+    useEffect(() => {
+        const stateToSave = {
+            currentTrack: state.currentTrack,
+            queue: state.queue,
+            volume: state.volume,
+            isMinimized: state.isMinimized,
+            repeatMode: state.repeatMode,
+            shuffle: state.shuffle,
+            playbackRate: state.playbackRate
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    }, [state.currentTrack, state.queue, state.volume, state.isMinimized, state.repeatMode, state.shuffle, state.playbackRate]);
 
     return (
         <PlayerContext.Provider value={{ state, dispatch }}>

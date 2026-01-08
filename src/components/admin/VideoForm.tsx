@@ -346,10 +346,10 @@ export default function VideoForm({ reciters, sections, phases = [], initialData
 
                 {/* Year/Period */}
                 <div>
-                    <label className="block text-sm font-medium mb-2">السنة / الفترة</label>
+                    <label className="block text-sm font-medium mb-2">السنة / الفترة (ميلادي)</label>
                     <input
                         type="text"
-                        placeholder="مثال: 1405 أو 1985"
+                        placeholder="مثال: 1985"
                         value={formData.time_period}
                         onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
                         className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"

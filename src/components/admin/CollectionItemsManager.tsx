@@ -5,6 +5,7 @@ import { useState } from "react";
 import { addCollectionItem, removeCollectionItem, reorderCollectionItems } from "@/app/actions/collections";
 import { supabase } from "@/lib/supabase/client";
 import { useDebounce } from "@/hooks/use-debounce";
+import { formatDualYear } from "@/lib/date-utils";
 
 interface CollectionItemsManagerProps {
     collectionId: string;
@@ -214,7 +215,7 @@ export default function CollectionItemsManager({ collectionId, items }: Collecti
                                             {rec.reciters.name_ar} - سورة {rec.surah_number}
                                         </div>
                                         <div className="text-xs text-slate-500">
-                                            {rec.sections.name_ar} • {typeof rec.recording_date === 'object' ? (rec.recording_date as any)?.year : 'تاريخ غير معروف'}
+                                            {rec.sections.name_ar} • {typeof rec.recording_date === 'object' ? formatDualYear((rec.recording_date as any)?.year) : 'تاريخ غير معروف'}
                                         </div>
                                     </div>
                                     <span className="text-emerald-600 opacity-0 group-hover:opacity-100 text-sm font-bold">

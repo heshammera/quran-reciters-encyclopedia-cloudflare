@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRecording, getSimilarRecordings } from "@/lib/supabase/queries";
 import { formatTime } from "@/lib/utils";
+import { formatDualYear } from "@/lib/date-utils";
 import PlayButton from "@/components/player/PlayButton";
 import QueueButton from "@/components/player/QueueButton";
 import { Metadata } from "next";
@@ -45,6 +46,7 @@ export async function generateMetadata({ params }: RecordingPageProps): Promise<
 }
 
 import CitationExport from "@/components/recordings/CitationExport";
+import RecordingHeaderVisualizer from "@/components/recordings/RecordingHeaderVisualizer";
 
 export default async function RecordingPage({ params }: RecordingPageProps) {
     const { id } = await params;
@@ -144,56 +146,132 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
                                     {displayTitle}
                                 </h1>
-                                <Link
-                                    href={`/reciters/${recording.reciter.id}`}
-                                    className="text-xl text-emerald-600 dark:text-emerald-400 hover:underline"
-                                >
-                                    الشيخ {recording.reciter.name_ar}
-                                </Link>
                             </div>
 
-                            <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                                <span className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                                    📍 {recording.city}
-                                </span>
-                                <span className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                                    📅 {recording.recording_date?.year || "غير مؤرخ"}
-                                </span>
-                                <Link
-                                    href={`/reciters/${recording.reciter.id}/${recording.section?.slug}`}
-                                    className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-                                >
-                                    📂 {recording.section?.name_ar}
-                                </Link>
-                                {recording.rarity_classification !== 'common' && (
-                                    <span className={`px-3 py-1 rounded-full text-sm text-white ${recording.rarity_classification === 'very_rare' ? 'bg-purple-600' :
-                                        recording.rarity_classification === 'rare' ? 'bg-red-500' : 'bg-amber-500'
-                                        }`}>
-                                        💎 {recording.rarity_classification === 'very_rare' ? 'نوادر خاصة' : 'ناهرة'}
-                                    </span>
-                                )}
-                            </div>
+                            {/* Split Row: Metadata (Right) | Details Box (Left) */}
+                            <div className="flex flex-col md:flex-row gap-6 mt-4 items-start">
+                                {/* Right Side: Metadata & Actions */}
+                                <div className="flex-1 w-full md:w-auto space-y-4">
+                                    {/* Reciter Name - Moved Here for Alignment */}
+                                    <div>
+                                        <Link
+                                            href={`/reciters/${recording.reciter.id}`}
+                                            className="text-xl text-emerald-600 dark:text-emerald-400 hover:underline inline-block"
+                                        >
+                                            الشيخ {recording.reciter.name_ar}
+                                        </Link>
+                                    </div>
 
-                            {/* Play & Queue Actions */}
-                            <div className="pt-4 flex flex-wrap justify-center md:justify-start gap-3">
-                                {isVideo ? (
-                                    <a
-                                        href="#video-player"
-                                        className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all transform hover:-translate-y-0.5"
-                                    >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                        مشاهدة الفيديو
-                                    </a>
-                                ) : (
-                                    <>
-                                        <PlayButton track={track} contextTracks={contextTracks} size="lg" />
-                                        <QueueButton track={track} label="إضافة لقائمة التشغيل" variant="solid" />
-                                    </>
-                                )}
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                                        <span className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                            📍 {recording.city}
+                                        </span>
+                                        <span className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                            📅 {formatDualYear(recording.recording_date?.year) || "غير مؤرخ"}
+                                        </span>
+                                        <Link
+                                            href={`/reciters/${recording.reciter.id}/${recording.section?.slug}`}
+                                            className="px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                                        >
+                                            📂 {recording.section?.name_ar}
+                                        </Link>
+                                        {recording.rarity_classification !== 'common' && (
+                                            <span className={`px-3 py-1 rounded-full text-sm text-white ${recording.rarity_classification === 'very_rare' ? 'bg-purple-600' :
+                                                recording.rarity_classification === 'rare' ? 'bg-red-500' : 'bg-amber-500'
+                                                }`}>
+                                                💎 {recording.rarity_classification === 'very_rare' ? 'نوادر خاصة' : 'ناهرة'}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                                        {isVideo ? (
+                                            <a
+                                                href="#video-player"
+                                                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all transform hover:-translate-y-0.5"
+                                            >
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M8 5v14l11-7z" />
+                                                </svg>
+                                                مشاهدة الفيديو
+                                            </a>
+                                        ) : (
+                                            <>
+                                                <PlayButton track={track} contextTracks={contextTracks} size="lg" />
+                                                <QueueButton track={track} label="إضافة لقائمة التشغيل" variant="solid" />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Left Side: Details Box */}
+                                <div className="w-full md:w-[380px] shrink-0">
+                                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 relative overflow-hidden group hover:border-emerald-500/30 transition-colors text-right">
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-80 z-10" />
+                                        <RecordingHeaderVisualizer recordingId={recording.id} />
+
+                                        <h3 className="font-bold text-slate-800 dark:text-white mb-4 text-sm flex items-center gap-2 relative z-10">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            تفاصيل ومحتوى التسجيل
+                                        </h3>
+
+                                        <div className="space-y-4">
+                                            {/* Source & Quality */}
+                                            {(recording.source_description || recording.quality_level) && (
+                                                <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2 pb-4 border-b border-slate-200 dark:border-slate-700">
+                                                    {recording.source_description && (
+                                                        <p className="leading-relaxed bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                                            {recording.source_description}
+                                                        </p>
+                                                    )}
+                                                    {recording.quality_level && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-slate-700 dark:text-slate-300">جودة التسجيل:</span>
+                                                            <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded text-[10px] font-bold">
+                                                                {recording.quality_level}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Surahs List */}
+                                            <div className="grid grid-cols-3 gap-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+                                                {recording.recording_coverage && recording.recording_coverage.length > 0 ? (
+                                                    recording.recording_coverage.map((seg: any, idx: number) => (
+                                                        <div key={idx} className="flex flex-col items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 group/item hover:border-emerald-500/20 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all text-center h-full">
+                                                            <div className="flex items-center gap-1 flex-wrap justify-center w-full">
+                                                                <span className="font-bold text-emerald-700 dark:text-emerald-400 text-xs line-clamp-1">
+                                                                    {getSurahName(seg.surah_number)}
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                                    {seg.ayah_start}-{seg.ayah_end}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : recording.surah_number ? (
+                                                    <div className="col-span-3">
+                                                        <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50">
+                                                            <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                                                سورة {getSurahName(recording.surah_number)}
+                                                            </span>
+                                                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded">
+                                                                الآيات {recording.ayah_start} - {recording.ayah_end}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="col-span-3 text-center py-4 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                                        لا تتوفر تفاصيل إضافية
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </div> {/* End Info Div */}
                     </div>
                 </div>
             </header>
@@ -238,48 +316,6 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                             </div>
                         )}
 
-                        {/* Description / Notes */}
-                        {(recording.source_description || recording.quality_level || recording.archival_id) && (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700/50">
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                                    تفاصيل التسجيل
-                                </h3>
-                                <div className="space-y-4 text-slate-600 dark:text-slate-400 leading-relaxed">
-                                    {recording.source_description && (
-                                        <p>{recording.source_description}</p>
-                                    )}
-                                    {recording.quality_level && (
-                                        <p className="text-sm">
-                                            <span className="font-bold text-slate-700 dark:text-slate-300">جودة التسجيل:</span> {recording.quality_level}
-                                        </p>
-                                    )}
-
-                                    <div className="pt-2">
-                                        <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">محتوى التسجيل:</span>
-                                        {recording.recording_coverage && recording.recording_coverage.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {recording.recording_coverage.map((seg: any, idx: number) => (
-                                                    <span key={idx} className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                                                            سورة {getSurahName(seg.surah_number)}
-                                                        </span>
-                                                        <span className="text-slate-400">|</span>
-                                                        <span className="text-sm text-slate-500">
-                                                            الآيات {seg.ayah_start} - {seg.ayah_end}
-                                                        </span>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-base text-slate-700 dark:text-slate-300">
-                                                سورة {getSurahName(recording.surah_number)} (الآيات {recording.ayah_start} - {recording.ayah_end})
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {/* Similar Recordings */}
                         <div className="pt-8">
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
@@ -308,25 +344,15 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center flex-wrap gap-2 mb-2">
-                                                            {sim.recording_coverage && sim.recording_coverage.length > 0 ? (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {sim.recording_coverage.map((seg: any, sIdx: number) => (
-                                                                        <span key={sIdx} className="text-sm font-bold text-emerald-600 dark:text-emerald-300 px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded">
-                                                                            سورة {getSurahName(seg.surah_number)} ({seg.ayah_start}-{seg.ayah_end})
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-300 px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded">
-                                                                    سورة {getSurahName(sim.surah_number)} ({sim.ayah_start} - {sim.ayah_end})
-                                                                </span>
-                                                            )}
+                                                            <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug group-hover:text-emerald-600 transition-colors">
+                                                                {sim.title || (sim.surah_number ? `سورة ${getSurahName(sim.surah_number)}` : (sim.sections?.name_ar || 'تلاوة'))}
+                                                            </h4>
                                                             <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                                                                 {sim.section?.name_ar}
                                                             </span>
                                                         </div>
                                                         <div className="flex flex-col gap-2">
-                                                            <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+                                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
                                                                 الشيخ {sim.reciter?.name_ar}
                                                             </h3>
                                                             <div className="flex items-center gap-2">
@@ -370,7 +396,7 @@ export default async function RecordingPage({ params }: RecordingPageProps) {
                                                             </div>
                                                         </div>
                                                         <p className="text-base text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                                                            📍 {sim.city} {sim.recording_date?.year ? `• ${sim.recording_date.year}` : ''}
+                                                            📍 {sim.city} {sim.recording_date?.year ? `• ${formatDualYear(sim.recording_date.year)}` : ''}
                                                         </p>
                                                     </div>
                                                 </div>

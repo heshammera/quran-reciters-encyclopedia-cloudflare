@@ -2,6 +2,7 @@
 
 import { useLeanMode } from "@/context/LeanModeContext";
 import Link from "next/link";
+import { formatDualYear } from "@/lib/date-utils";
 
 interface ReciterProfileHeaderProps {
     reciter: {
@@ -39,8 +40,8 @@ export default function ReciterProfileHeader({ reciter }: ReciterProfileHeaderPr
                             <div className="text-sm text-slate-600 dark:text-slate-400 flex gap-4">
                                 {(reciter.birth_date || reciter.death_date) && (
                                     <span>
-                                        {reciter.birth_date && new Date(reciter.birth_date).getFullYear()}
-                                        {reciter.death_date && ` - ${new Date(reciter.death_date).getFullYear()}`}
+                                        {reciter.birth_date && formatDualYear(new Date(reciter.birth_date).getFullYear())}
+                                        {reciter.death_date && ` - ${formatDualYear(new Date(reciter.death_date).getFullYear())}`}
                                     </span>
                                 )}
                             </div>
@@ -114,8 +115,8 @@ export default function ReciterProfileHeader({ reciter }: ReciterProfileHeaderPr
                                 <div className="flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                                     <span className="text-xl">📅</span>
                                     <span>
-                                        {reciter.birth_date && new Date(reciter.birth_date).getFullYear()}
-                                        {reciter.death_date && ` - ${new Date(reciter.death_date).getFullYear()}`}
+                                        {reciter.birth_date && formatDualYear(new Date(reciter.birth_date).getFullYear())}
+                                        {reciter.death_date && ` - ${formatDualYear(new Date(reciter.death_date).getFullYear())}`}
                                     </span>
                                 </div>
                             )}

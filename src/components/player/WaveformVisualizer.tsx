@@ -6,9 +6,10 @@ interface WaveformVisualizerProps {
     analyser: AnalyserNode | null;
     isPlaying: boolean;
     color?: string; // Optional color string, e.g., "#10b981" (emerald-500)
+    allowSimulation?: boolean;
 }
 
-export default function WaveformVisualizer({ analyser, isPlaying, color = "#10b981" }: WaveformVisualizerProps) {
+export default function WaveformVisualizer({ analyser, isPlaying, color = "#10b981", allowSimulation = true }: WaveformVisualizerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef = useRef<number | null>(null);
 
@@ -19,110 +20,110 @@ export default function WaveformVisualizer({ analyser, isPlaying, color = "#10b9
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Analyser config if available
         let bufferLength = 0;
         let dataArray: Uint8Array | null = null;
 
         if (analyser) {
-            analyser.fftSize = 64;
+            // High sensitivity settings
+            analyser.fftSize = 256;
+            analyser.minDecibels = -90; // Even more sensitive
+            analyser.maxDecibels = -10;
+            analyser.smoothingTimeConstant = 0.85;
             bufferLength = analyser.frequencyBinCount;
             dataArray = new Uint8Array(bufferLength);
         }
 
-        let silenceCounter = 0;
-        let useSimulation = false;
-
         const draw = () => {
+            requestRef.current = requestAnimationFrame(draw);
+
             if (!isPlaying) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                // Optional: Draw a flat line or dot to signify "ready"
+                // Pause state: Thin line
                 ctx.fillStyle = color;
                 ctx.globalAlpha = 0.3;
-                ctx.fillRect(0, canvas.height - 2, canvas.width, 2);
+                ctx.fillRect(0, canvas.height / 2, canvas.width, 1);
                 ctx.globalAlpha = 1.0;
                 return;
             }
 
-            requestRef.current = requestAnimationFrame(draw);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Attempt to get real data
             let hasSignal = false;
+            // Attempt to get real data
             if (analyser && dataArray) {
                 analyser.getByteFrequencyData(dataArray as any);
-                // Check if we have any signal
+                // Check signal
                 for (let i = 0; i < dataArray.length; i++) {
-                    if (dataArray[i] > 0) {
+                    if (dataArray[i] > 1) {
                         hasSignal = true;
                         break;
                     }
                 }
             }
 
-            // Logic to switch to simulation if silence persists while playing (likely CORS blocking)
-            if (!hasSignal) {
-                silenceCounter++;
-                if (silenceCounter > 10) { // ~160ms of silence
-                    useSimulation = true;
-                }
-            } else {
-                silenceCounter = 0;
-                useSimulation = false;
-            }
+            // Draw Mirrored Spectrum
+            const barsCount = 50;
+            const centerX = canvas.width / 2;
+            const barSpacing = 1;
+            const barWidth = (canvas.width / barsCount) - barSpacing;
 
-            const bars = 5;
-            const barWidth = (canvas.width / bars) - 1;
-
-            for (let i = 0; i < bars; i++) {
+            for (let i = 0; i < barsCount / 2; i++) {
                 let barHeight = 0;
 
-                if (!useSimulation && dataArray) {
-                    // Real Data
-                    const step = Math.floor(dataArray.length / bars);
-                    let sum = 0;
-                    for (let j = 0; j < step; j++) {
-                        sum += dataArray[(i * step) + j];
-                    }
-                    barHeight = ((sum / step) / 255) * canvas.height;
-                } else {
-                    // Simulation Mode (Fake it!)
-                    // Use time-based sine waves + random noise for organic feel
+                if (hasSignal && dataArray) {
+                    // Map bars to frequency bins. focus on lower/middle range
+                    const binIndex = Math.floor((i / (barsCount / 2)) * (dataArray.length * 0.6));
+                    const value = dataArray[binIndex] || 0;
+                    barHeight = (value / 255) * canvas.height;
+                } else if (allowSimulation) {
+                    // Smart Simulation: Mimic Speech
                     const time = Date.now() / 150;
-                    const noise = Math.random() * 0.3;
-                    const wave = Math.sin(time + i) * 0.5 + 0.5; // 0 to 1
-                    // Combine them
-                    const value = (wave * 0.7) + noise;
-                    barHeight = value * canvas.height * 0.8; // Max 80% height
+                    const noise = Math.random() * 0.1;
+
+                    // Shape: Energetic in the center, tapering off
+                    const shape = Math.max(0, 1 - (i / (barsCount * 0.4)));
+
+                    // Complex wave for speech-like jitter
+                    const w1 = Math.sin(time + i * 0.2);
+                    const w2 = Math.cos(time * 0.7 + i * 0.1);
+                    const w3 = Math.sin(time * 2.3 + i * 0.5); // Fast jitter
+
+                    // Envelope for pauses/bursts
+                    const envelope = (Math.sin(time / 4) + 1.2) / 2.2;
+
+                    const combined = (Math.abs(w1 * w2 + w3 * 0.2) * 0.7 + noise * 0.3) * envelope;
+                    barHeight = combined * shape * canvas.height * 0.85;
                 }
 
-                // Ensure min height for visibility
-                barHeight = Math.max(2, barHeight);
+                barHeight = Math.max(1.5, barHeight);
 
                 ctx.fillStyle = color;
-                const x = i * (barWidth + 1);
-                const y = canvas.height - barHeight;
+                ctx.globalAlpha = 0.6 + (barHeight / canvas.height) * 0.4;
 
-                ctx.fillRect(x, y, barWidth, barHeight);
+                const xRight = centerX + (i * (barWidth + barSpacing));
+                const xLeft = centerX - (i * (barWidth + barSpacing)) - barWidth;
+
+                const y = (canvas.height - barHeight) / 2;
+
+                ctx.fillRect(xRight, y, barWidth, barHeight);
+                ctx.fillRect(xLeft, y, barWidth, barHeight);
             }
+            ctx.globalAlpha = 1.0;
         };
 
-        if (isPlaying) {
-            draw();
-        } else {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        draw();
 
         return () => {
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [analyser, isPlaying, color]);
+    }, [analyser, isPlaying, color, allowSimulation]);
 
     return (
         <canvas
             ref={canvasRef}
-            width={40}
-            height={40}
-            className="w-full h-full opacity-50"
+            width={400}
+            height={100}
+            className="w-full h-full"
         />
     );
 }

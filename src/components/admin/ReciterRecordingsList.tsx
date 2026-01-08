@@ -4,6 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import ReferenceToggle from "./ReferenceToggle";
+import { formatDualYear } from "@/lib/date-utils";
 
 interface ReciterRecordingsProps {
     reciterId: string;
@@ -86,7 +87,7 @@ export default async function ReciterRecordingsList({ reciterId }: ReciterRecord
                                         {rec.sections?.name_ar}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-slate-500">
-                                        {typeof rec.recording_date === 'object' ? (rec.recording_date as any)?.year : '-'}
+                                        {typeof rec.recording_date === 'object' ? formatDualYear((rec.recording_date as any)?.year) : '-'}
                                     </td>
                                     <td className="px-4 py-3 text-sm">
                                         <span className={`px-2 py-0.5 rounded text-xs ${rec.quality_level === 'high' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
