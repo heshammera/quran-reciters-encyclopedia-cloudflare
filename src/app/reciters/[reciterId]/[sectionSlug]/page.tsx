@@ -9,6 +9,7 @@ import PlayButton from "@/components/player/PlayButton";
 import QueueButton from "@/components/player/QueueButton";
 import AutoPlayer from "@/components/player/AutoPlayer";
 import VideoModal from "@/components/player/VideoModal";
+import DownloadButton from "@/components/offline/DownloadButton";
 import { Track } from "@/types/player";
 import { SURAHS } from "@/lib/quran/metadata";
 import { getSurahName } from "@/lib/quran-helpers";
@@ -203,18 +204,15 @@ export default function SectionPage({ params, searchParams }: SectionPageProps) 
                                             </button>
                                         ) : (
                                             recording.media_files?.[0]?.archive_url && (
-                                                <a
-                                                    href={recording.media_files[0].archive_url}
-                                                    download
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
-                                                    title="تحميل"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                    </svg>
-                                                </a>
+                                                <div className="scale-75 origin-right">
+                                                    <DownloadButton
+                                                        trackId={recording.id}
+                                                        title={recording.title || (recording.surah_number ? `سورة ${getSurahName(recording.surah_number)}` : 'تسجيل عام')}
+                                                        reciterName={reciter.name_ar}
+                                                        audioUrl={recording.media_files[0].archive_url}
+                                                        surahNumber={recording.surah_number}
+                                                    />
+                                                </div>
                                             )
                                         )}
                                     </div>

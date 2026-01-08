@@ -8,6 +8,7 @@ import { useLeanMode } from "@/context/LeanModeContext";
 import { addToHistory } from "@/lib/history-utils";
 
 import PlayerQueue from "./PlayerQueue";
+import DownloadButton from "../offline/DownloadButton";
 
 export default function AudioPlayer() {
     const { state, dispatch } = usePlayer();
@@ -384,6 +385,17 @@ export default function AudioPlayer() {
 
                     {/* Group 2: All Utility Tools */}
                     <div className="flex items-center gap-1 md:gap-2 px-0 md:px-1.5 overflow-x-auto md:overflow-visible no-scrollbar w-full md:w-auto mt-2 md:mt-0 justify-between md:justify-start">
+                        {/* Mobile prominence for Offline Download */}
+                        <div className="flex md:hidden shrink-0">
+                            <DownloadButton
+                                trackId={currentTrack.id}
+                                title={currentTrack.title}
+                                reciterName={currentTrack.reciterName}
+                                audioUrl={currentTrack.src}
+                                surahNumber={currentTrack.surahNumber}
+                            />
+                        </div>
+
                         {/* Wrapper for utilities on mobile to scroll/flex properly */}
 
                         {/* Repeat */}
@@ -470,19 +482,16 @@ export default function AudioPlayer() {
                             </svg>
                         </Link>
 
-                        {/* Downloads */}
-                        <a
-                            href={currentTrack.src}
-                            download
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 transition-colors rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-                            title="تحميل الملف"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                        </a>
+                        {/* Desktop Downloads - Hidden on mobile as we show it above for mobile prominence */}
+                        <div className="hidden md:block">
+                            <DownloadButton
+                                trackId={currentTrack.id}
+                                title={currentTrack.title}
+                                reciterName={currentTrack.reciterName}
+                                audioUrl={currentTrack.src}
+                                surahNumber={currentTrack.surahNumber}
+                            />
+                        </div>
 
 
                         {/* Sleep Timer */}
