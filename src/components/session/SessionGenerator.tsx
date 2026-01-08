@@ -126,8 +126,8 @@ export default function SessionGenerator() {
                     <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
                         مدة الجلسة التقريبية
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {[30, 60, 90].map((m) => (
+                    <div className="grid grid-cols-2 gap-3">
+                        {[30, 60, 90, 120].map((m) => (
                             <button
                                 key={m}
                                 onClick={() => setDuration(m)}
@@ -142,27 +142,28 @@ export default function SessionGenerator() {
                     </div>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 flex justify-center">
                     <button
                         onClick={handleCreateSession}
                         disabled={loading}
-                        className="w-full py-4 bg-emerald-600 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        style={{ color: 'white' }}
+                        className="py-4 px-8 bg-emerald-600 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style={{ color: 'white', minWidth: 'calc(50% + 0.375rem)' }}
                     >
                         {loading ? (
                             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                             <>
                                 <span>▶️</span>
-                                <span className="text-white">ابدأ الاستماع</span>
+                                <span className="text-white">ابدأ الآن</span>
                             </>
                         )}
                     </button>
-                    <p className="text-center text-xs text-slate-400 mt-3">
-                        سيقوم النظام باختيار تلاوات عشوائية تناسب ذوقك وتغطي المدة المحددة.
-                    </p>
                 </div>
+                <p className="text-center text-xs text-slate-400 mt-3">
+                    سيقوم النظام باختيار تلاوات عشوائية تناسب ذوقك وتغطي المدة المحددة.
+                </p>
             </div>
         </div>
+
     );
 }
