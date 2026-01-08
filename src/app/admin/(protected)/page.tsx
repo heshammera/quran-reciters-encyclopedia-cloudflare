@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { SURAHS } from "@/lib/quran/metadata";
+import LiveMonitor from "@/components/admin/LiveMonitor";
 
 async function getStats() {
     const supabase = await createClient();
@@ -162,6 +163,11 @@ export default async function AdminDashboard() {
                         </div>
                     </Link>
                 </div>
+            </div>
+
+            {/* Live Monitoring Section */}
+            <div className="grid grid-cols-1 gap-8">
+                <LiveMonitor />
             </div>
 
             {/* Quick Actions & Recent */}

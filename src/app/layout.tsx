@@ -13,6 +13,7 @@ import Navbar from "@/components/layout/Navbar";
 import WelcomePopup from "@/components/layout/WelcomePopup";
 import DonationBanner from "@/components/donation/DonationBanner";
 import OfflineIndicator from "@/components/offline/OfflineIndicator";
+import PresenceTracker from "@/components/layout/PresenceTracker";
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -82,6 +83,7 @@ export default function RootLayout({
               <AudioPlayer />
               <LeanToggle />
               <OfflineIndicator />
+              <PresenceTracker />
               <WelcomePopup />
               {!isAdmin && <AssistantChat />}
               {!isAdmin && <Footer />}

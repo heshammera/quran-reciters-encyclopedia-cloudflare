@@ -146,14 +146,15 @@ export default function SessionGenerator() {
                     <button
                         onClick={handleCreateSession}
                         disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-emerald-600 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style={{ color: 'white' }}
                     >
                         {loading ? (
                             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                             <>
                                 <span>▶️</span>
-                                ابدأ الاستماع
+                                <span className="text-white">ابدأ الاستماع</span>
                             </>
                         )}
                     </button>
