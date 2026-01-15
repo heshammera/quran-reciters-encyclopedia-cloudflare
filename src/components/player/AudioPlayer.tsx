@@ -6,6 +6,7 @@ import { usePlayer } from "@/hooks/usePlayer";
 import { formatTime } from "@/lib/utils";
 import { useLeanMode } from "@/context/LeanModeContext";
 import { addToHistory, updateLastPosition, getLastPosition } from "@/lib/history-utils";
+import { getSurahName } from "@/lib/quran-helpers";
 
 import PlayerQueue from "./PlayerQueue";
 import DownloadButton from "../offline/DownloadButton";
@@ -394,6 +395,43 @@ export default function AudioPlayer() {
             });
         }
     }, [currentTrack?.id, isPlaying]);
+
+    // Media Session API - Update metadata for mobile lock screen
+    useEffect(() => {
+        if (!currentTrack || !('mediaSession' in navigator)) return;
+
+        try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: currentTrack.title,
+                artist: currentTrack.reciterName,
+                album: currentTrack.surahNumber ? `سورة ${getSurahName(currentTrack.surahNumber)}` : 'موسوعة القراء',
+                artwork: [
+                    { src: '/logo.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/logo.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            // Set action handlers
+            navigator.mediaSession.setActionHandler('play', () => {
+                dispatch({ type: "TOGGLE_PLAY_PAUSE" });
+            });
+
+            navigator.mediaSession.setActionHandler('pause', () => {
+                dispatch({ type: "TOGGLE_PLAY_PAUSE" });
+            });
+
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                dispatch({ type: "PREV_TRACK" });
+            });
+
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                dispatch({ type: "NEXT_TRACK" });
+            });
+
+        } catch (error) {
+            console.warn('[MediaSession] Error setting metadata:', error);
+        }
+    }, [currentTrack, dispatch]);
 
     const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
         const time = Number(e.target.value);

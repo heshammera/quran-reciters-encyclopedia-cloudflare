@@ -64,7 +64,7 @@ export default function HistoryPage() {
                             id: entry.trackId,
                             title: entry.title,
                             reciterName: entry.reciterName,
-                            src: "", // Will be loaded when played
+                            src: entry.src || "", // Use actual src from history
                             surahNumber: entry.surahNumber
                         };
 
