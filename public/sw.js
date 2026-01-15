@@ -156,17 +156,22 @@ self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'CACHE_AUDIO') {
         const { url } = event.data;
         caches.open(AUDIO_CACHE).then((cache) => {
-            fetch(url).then((response) => {
-                if (response.ok) {
-                    cache.put(url, response);
+            // Try fetching with CORS first
+            fetch(url, { mode: 'cors', credentials: 'omit' }).then((response) => {
+                // If response is not ok (e.g. 404, 500), throw error
+                if (!response.ok && response.status !== 0) {
+                    throw new Error(`Fetch failed with status: ${response.status}`);
+                }
+
+                // If opaque response (status 0) or ok response
+                const responseToCache = response.clone();
+                cache.put(url, responseToCache).then(() => {
                     // Broadcast to all clients
                     broadcast({ type: 'DOWNLOAD_COMPLETE', url, success: true });
                     if (event.ports && event.ports[0]) {
                         event.ports[0].postMessage({ success: true });
                     }
-                } else {
-                    throw new Error('Fetch failed');
-                }
+                });
             }).catch((err) => {
                 console.error('[SW] Download failed:', err);
                 broadcast({ type: 'DOWNLOAD_ERROR', url, success: false });

@@ -30,9 +30,13 @@ export default function DownloadsPage() {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
 
+        // Auto-refresh cache size every 10 seconds to show background download progress
+        const cacheRefreshInterval = setInterval(updateCacheSize, 10000);
+
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            clearInterval(cacheRefreshInterval);
         };
     }, []);
 
@@ -79,8 +83,8 @@ export default function DownloadsPage() {
 
                     {/* Online/Offline Indicator */}
                     <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isOnline
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                         }`}>
                         <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-600" : "bg-amber-600"}`} />
                         <span className="text-sm font-bold">{isOnline ? "متصل" : "غير متصل"}</span>
@@ -98,6 +102,15 @@ export default function DownloadsPage() {
                             <div className="text-sm text-slate-600 dark:text-slate-400">عدد التلاوات</div>
                             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{downloads.length}</div>
                         </div>
+                        <button
+                            onClick={updateCacheSize}
+                            className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="تحديث المساحة"
+                        >
+                            <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>

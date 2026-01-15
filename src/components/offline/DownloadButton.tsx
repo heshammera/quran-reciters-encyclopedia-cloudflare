@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
+import { useToast } from "@/context/ToastContext";
 import {
     isTrackDownloaded,
     downloadAudioForOffline,
     addPendingDownload,
+    addDownloadedTrack,
+    removePendingDownload,
     type DownloadedTrack
 } from "@/lib/download-manager";
 
@@ -31,6 +34,7 @@ export default function DownloadButton({
     minimal = false
 }: DownloadButtonProps) {
     const { state, dispatch } = usePlayer();
+    const { showToast } = useToast();
     const [isDownloaded, setIsDownloaded] = useState(false);
 
     // Check if this specific URL is being downloaded globally
@@ -39,6 +43,25 @@ export default function DownloadButton({
     useEffect(() => {
         setIsDownloaded(isTrackDownloaded(trackId));
     }, [trackId, state.activeDownloads]);
+
+    // Listen for download completion
+    useEffect(() => {
+        const handleDownloadComplete = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail.url === audioUrl) {
+                showToast(
+                    `✅ اكتمل تحميل "${title}" وأصبح متاحاً للاستماع أوفلاين!`,
+                    'success',
+                    5000
+                );
+            }
+        };
+
+        window.addEventListener('downloadComplete', handleDownloadComplete);
+        return () => {
+            window.removeEventListener('downloadComplete', handleDownloadComplete);
+        };
+    }, [audioUrl, title, showToast]);
 
     const handleDownload = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -63,18 +86,35 @@ export default function DownloadButton({
         dispatch({ type: "START_DOWNLOAD", payload: audioUrl });
 
         try {
-            // 4. Trigger Service Worker
+            // 4. Trigger download
             const success = await downloadAudioForOffline(audioUrl);
 
-            // Note: success handling for the specific trigger is optional here
-            // because AudioPlayer.tsx global listener now handles the SW broadcast.
-            if (!success) {
-                // If it failed immediately
-                dispatch({ type: "COMPLETE_DOWNLOAD", payload: audioUrl });
-                // We don't remove pending here because the broadcast might still come if SW is slow
+            if (success) {
+                // Download started successfully - save to downloaded tracks
+                addDownloadedTrack(track);
+                removePendingDownload(audioUrl);
+
+                // Update local state
+                setIsDownloaded(true);
+
+                // Show success toast
+                showToast(
+                    `📥 بدأ تحميل "${title}" في الخلفية. سيتم إعلامك عند الانتهاء.`,
+                    'info',
+                    8000 // Auto dismiss after 8 seconds
+                );
+
+                console.log('[DownloadButton] Track saved to downloads');
+            } else {
+                showToast('فشل بدء التحميل. حاول مرة أخرى.', 'error');
             }
+
+            // Complete download state (remove spinner)
+            dispatch({ type: "COMPLETE_DOWNLOAD", payload: audioUrl });
+
         } catch (error) {
-            console.error('Download trigger error:', error);
+            console.error('Download error:', error);
+            showToast('حدث خطأ أثناء التحميل', 'error');
             dispatch({ type: "COMPLETE_DOWNLOAD", payload: audioUrl });
         }
     };

@@ -6,6 +6,7 @@ import "./globals.css";
 import { PlayerProvider } from "@/context/PlayerContext";
 import AudioPlayer from "@/components/player/AudioPlayer";
 import { LeanModeProvider } from "@/context/LeanModeContext";
+import { ToastProvider } from "@/context/ToastContext";
 import LeanToggle from "@/components/layout/LeanToggle";
 import AssistantChat from "@/components/assistant/AssistantChat";
 import Footer from "@/components/layout/Footer";
@@ -16,7 +17,6 @@ import OfflineIndicator from "@/components/offline/OfflineIndicator";
 import PresenceTracker from "@/components/layout/PresenceTracker";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 
 export default function RootLayout({
   children,
@@ -26,19 +26,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 
-  // Register Service Worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered:', registration);
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
-    }
-  }, []);
+  // Service Worker is automatically registered by next-pwa
 
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
@@ -73,23 +61,25 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans transition-colors duration-300 bg-background text-foreground">
         {!isAdmin && <DonationBanner />}
-        <LeanModeProvider>
-          <PlayerProvider>
-            <div className="flex flex-col min-h-screen">
-              {!isAdmin && <Navbar />}
-              <main className="flex-grow">
-                {children}
-              </main>
-              {!isAdmin && <AudioPlayer />}
-              {!isAdmin && <LeanToggle />}
-              <OfflineIndicator />
-              <PresenceTracker />
-              {!isAdmin && <WelcomePopup />}
-              {!isAdmin && <AssistantChat />}
-              {!isAdmin && <Footer />}
-            </div>
-          </PlayerProvider>
-        </LeanModeProvider>
+        <ToastProvider>
+          <LeanModeProvider>
+            <PlayerProvider>
+              <div className="flex flex-col min-h-screen">
+                {!isAdmin && <Navbar />}
+                <main className="flex-grow">
+                  {children}
+                </main>
+                {!isAdmin && <AudioPlayer />}
+                {!isAdmin && <LeanToggle />}
+                <OfflineIndicator />
+                <PresenceTracker />
+                {!isAdmin && <WelcomePopup />}
+                {!isAdmin && <AssistantChat />}
+                {!isAdmin && <Footer />}
+              </div>
+            </PlayerProvider>
+          </LeanModeProvider>
+        </ToastProvider>
       </body>
     </html >
   );
