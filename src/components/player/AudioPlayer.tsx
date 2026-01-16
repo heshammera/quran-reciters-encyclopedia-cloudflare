@@ -82,11 +82,16 @@ export default function AudioPlayer() {
         if (!audioRef.current || sourceNodeRef.current) return;
 
         try {
+            console.log('🎛️ Initializing Web Audio API and Equalizer...');
             const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContext) return;
+            if (!AudioContext) {
+                console.warn('⚠️ Web Audio API not supported in this browser');
+                return;
+            }
 
             const ctx = new AudioContext();
             audioContextRef.current = ctx;
+            console.log('✅ AudioContext created, state:', ctx.state);
 
             const source = ctx.createMediaElementSource(audioRef.current);
             sourceNodeRef.current = source;
@@ -95,15 +100,18 @@ export default function AudioPlayer() {
             const bass = ctx.createBiquadFilter();
             bass.type = 'lowshelf';
             bass.frequency.value = 200; // Bass below 200Hz
+            bass.gain.value = 0; // Start at 0dB
 
             const mid = ctx.createBiquadFilter();
             mid.type = 'peaking';
             mid.frequency.value = 1000; // Mid around 1kHz
             mid.Q.value = 1;
+            mid.gain.value = 0; // Start at 0dB
 
             const treble = ctx.createBiquadFilter();
             treble.type = 'highshelf';
             treble.frequency.value = 3000; // Treble above 3kHz
+            treble.gain.value = 0; // Start at 0dB
 
             // Create Analyser
             const analyser = ctx.createAnalyser();
@@ -128,21 +136,37 @@ export default function AudioPlayer() {
             midFilterRef.current = mid;
             trebleFilterRef.current = treble;
 
+            console.log('✅ Audio filters created and connected:', {
+                bass: bass.frequency.value + 'Hz',
+                mid: mid.frequency.value + 'Hz',
+                treble: treble.frequency.value + 'Hz'
+            });
+
         } catch (error) {
-            console.error("Web Audio API Error:", error);
+            console.error("❌ Web Audio API Error:", error);
         }
-    }, [audioRef]);
+    }, []); // Run once on mount
 
     // Update Filter Gains when state changes
     useEffect(() => {
-        if (bassFilterRef.current) bassFilterRef.current.gain.value = eqGains.bass;
-        if (midFilterRef.current) midFilterRef.current.gain.value = eqGains.mid;
-        if (trebleFilterRef.current) trebleFilterRef.current.gain.value = eqGains.treble;
+        if (bassFilterRef.current) {
+            bassFilterRef.current.gain.value = eqGains.bass;
+            console.log('🎚️ Bass gain updated to:', eqGains.bass, 'dB');
+        }
+        if (midFilterRef.current) {
+            midFilterRef.current.gain.value = eqGains.mid;
+            console.log('🎚️ Mid gain updated to:', eqGains.mid, 'dB');
+        }
+        if (trebleFilterRef.current) {
+            trebleFilterRef.current.gain.value = eqGains.treble;
+            console.log('🎚️ Treble gain updated to:', eqGains.treble, 'dB');
+        }
     }, [eqGains]);
 
     // Resume AudioContext on Play (Browser Autoplay Policy)
     useEffect(() => {
         if (isPlaying && audioContextRef.current?.state === 'suspended') {
+            console.log('▶️ Resuming suspended AudioContext...');
             audioContextRef.current.resume();
         }
     }, [isPlaying]);
@@ -698,19 +722,19 @@ export default function AudioPlayer() {
                                         const nextMode = modes[(currentIdx + 1) % modes.length];
                                         dispatch({ type: "SET_REPEAT_MODE", payload: nextMode });
                                     }}
-                                    className={`p-1.5 transition-colors rounded-lg ${repeatMode !== 'off'
-                                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400"
-                                        : "text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                                    className={`p-2 md:p-1.5 transition-all duration-200 rounded-lg ${repeatMode !== 'off'
+                                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400 scale-110"
+                                        : "text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105"
                                         }`}
                                     title={repeatMode === 'one' ? 'تكرار التلاوة' : repeatMode === 'all' ? 'تكرار الكل' : 'بدون تكرار'}
                                 >
                                     {repeatMode === 'one' ? (
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             <text x="12" y="16" fontSize="10" textAnchor="middle" fill="currentColor" fontWeight="bold">1</text>
                                         </svg>
                                     ) : (
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
                                     )}
@@ -719,13 +743,13 @@ export default function AudioPlayer() {
                                 {/* Shuffle */}
                                 <button
                                     onClick={() => dispatch({ type: "TOGGLE_SHUFFLE" })}
-                                    className={`p-1.5 transition-colors rounded-lg ${shuffle
-                                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400"
-                                        : "text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                                    className={`p-2 md:p-1.5 transition-all duration-200 rounded-lg ${shuffle
+                                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400 scale-110"
+                                        : "text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105"
                                         }`}
                                     title={shuffle ? 'إلغاء العشوائي' : 'تشغيل عشوائي'}
                                 >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                     </svg>
                                 </button>
@@ -734,10 +758,10 @@ export default function AudioPlayer() {
                                 <div className="relative">
                                     <button
                                         onClick={() => setShowEqualizer(!showEqualizer)}
-                                        className={`p-1.5 rounded-lg transition-colors ${showEqualizer ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "text-slate-400 hover:text-emerald-500"}`}
+                                        className={`p-2 md:p-1.5 rounded-lg transition-all duration-200 ${showEqualizer ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 scale-110" : "text-slate-400 hover:text-emerald-500 hover:scale-105"}`}
                                         title="المعادل الصوتي"
                                     >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                                         </svg>
                                     </button>
