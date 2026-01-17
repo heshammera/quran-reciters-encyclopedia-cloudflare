@@ -742,467 +742,488 @@ export default function RecordingForm({ initialData }: RecordingFormProps) {
 
             {success && <div className="p-4 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">تم الحفظ بنجاح!</div>}
 
-            {/* Content Type Toggle */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 mb-6 flex items-center justify-between">
-                <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white">نوع المحتوى</h3>
-                    <p className="text-sm text-slate-500">اختر نوع التسجيل لتحديد الحقول المطلوبة</p>
-                </div>
-                <div className="flex bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
-                    <button
-                        type="button"
-                        onClick={() => setContentType('quran')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'quran'
-                            ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
-                    >
-                        تلاوة قرآنية
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setContentType('general')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'general'
-                            ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
-                    >
-                        تسجيل عام (ابتهال/نشيد)
-                    </button>
-                </div>
-            </div>
+            {/* 1. Grid: Two Columns Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-            {/* 1. Grid: Basic Info (Reciter/Section/Title) + Quran Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column: Reciter, Section, Title */}
-                <div className="space-y-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">معلومات أساسية</h3>
+                {/* ═══════════════ RIGHT COLUMN: معلومات أساسية + تفاصيل التلاوة + التصنيف ═══════════════ */}
+                <div className="space-y-6">
 
-                    {/* القارئ والقسم - جنب بعض */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">القارئ *</label>
-                            <select
-                                required
-                                value={formData.reciter_id}
-                                onChange={handleReciterChange}
-                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            >
-                                <option value="">اختر القارئ...</option>
-                                {reciters.map(r => <option key={r.id} value={r.id}>{r.name_ar}</option>)}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">القسم *</label>
-                            <select
-                                required
-                                value={formData.section_id}
-                                onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
-                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            >
-                                <option value="">اختر القسم...</option>
-                                {sections.map(s => <option key={s.id} value={s.id}>{s.name_ar}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Phase Selection */}
-                    {phases.length > 0 && (
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الفترة الزمنية للقارئ (اختياري)</label>
-                            <select
-                                value={formData.reciter_phase_id}
-                                onChange={(e) => setFormData({ ...formData, reciter_phase_id: e.target.value })}
-                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            >
-                                <option value="">بدون تحديد</option>
-                                {phases.map(p => <option key={p.id} value={p.id}>{p.phase_name_ar}</option>)}
-                            </select>
-                        </div>
-                    )}
-
-                    {/* الاسم الكامل للتلاوة */}
-                    <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
-                            الاسم الكامل للتلاوة
-                            {contentType === 'general' && <span className="text-red-500 mr-1">*</span>}
-                            {contentType === 'quran' && <span className="text-slate-400 text-xs mr-2">(اختياري)</span>}
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            required={contentType === 'general'}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600 placeholder-slate-400 text-sm"
-                            placeholder="مثال: تلاوة سورة الفاتحة - حفص عن عاصم"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                            {contentType === 'quran'
-                                ? 'يظهر هذا الاسم بدلاً من (سورة + رقم)، مع عرض التفاصيل الأصلية كعنوان فرعي.'
-                                : 'إلزامي للتسجيلات العامة (ابتهالات، أناشيد، دروس، إلخ).'
-                            }
-                        </p>
-                    </div>
-                </div>
-
-                {/* Right Column: Quran Content (Multi-Segment) */}
-                {contentType === 'quran' && (
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center border-b pb-2">
-                            <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني</h3>
-                            <button
-                                type="button"
-                                onClick={addSegment}
-                                className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full font-bold transition-colors"
-                            >
-                                + إضافة مقطع
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            {segments.map((seg, idx) => {
-                                const currentSurah = SURAHS.find(s => s.number === seg.surah) || SURAHS[0];
-                                const ayahOptions = getAyahOptions(currentSurah.ayahCount);
-
-                                return (
-                                    <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 relative group">
-                                        {/* Delete Segment - Always visible for segments after first */}
-                                        {idx > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeSegment(idx)}
-                                                className="absolute top-2 left-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full p-1.5 z-10 transition-colors"
-                                                title="حذف المقطع"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        )}
-
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0">
-                                                    {idx + 1}
-                                                </span>
-                                                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-sm">مقطع {idx + 1}</h4>
-                                            </div>
-
-                                            {/* Surah Selection */}
-                                            <div>
-                                                <label className="block text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">السورة</label>
-                                                <select
-                                                    value={seg.surah}
-                                                    onChange={(e) => updateSegment(idx, 'surah', parseInt(e.target.value))}
-                                                    className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
-                                                >
-                                                    {SURAHS.map(s => <option key={s.number} value={s.number}>{s.name} ({s.number})</option>)}
-                                                </select>
-                                            </div>
-
-                                            {/* Ayah Range */}
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">من آية</label>
-                                                    <select
-                                                        value={seg.start}
-                                                        onChange={(e) => updateSegment(idx, 'start', parseInt(e.target.value))}
-                                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
-                                                    >
-                                                        {ayahOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium mb-1 text-slate-600 dark:text-slate-400">إلى آية</label>
-                                                    <select
-                                                        value={seg.end}
-                                                        onChange={(e) => updateSegment(idx, 'end', parseInt(e.target.value))}
-                                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
-                                                    >
-                                                        {ayahOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* معلومات التلاوة - Full Width */}
-            <div className="border-t pt-6">
-                <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2 mb-4">معلومات التلاوة</h3>
-
-                {/* Row 1: المكان والدولة */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">المكان التفصيلي (اختياري)</label>
-                        <input
-                            type="text"
-                            list="venue-suggestions"
-                            value={formData.venue}
-                            onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="مثال: مسجد الحسين، قاعة المؤتمرات، إلخ"
-                        />
-                        <datalist id="venue-suggestions">
-                            {venueSuggestions.map((s, i) => <option key={i} value={s} />)}
-                        </datalist>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الدولة *</label>
-                        <input
-                            type="text"
-                            list="city-suggestions"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="مثال: مصر، السعودية، الأردن"
-                            required
-                        />
-                        <datalist id="city-suggestions">
-                            {citySuggestions.map((s, i) => <option key={i} value={s} />)}
-                        </datalist>
-                    </div>
-                </div>
-
-                {/* Row 2: السنة، الشهر، اليوم، الفترة الزمنية، المدة - في سطر واحد */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">السنة</label>
-                        <input
-                            type="number"
-                            value={formData.recording_year || ""}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                recording_year: e.target.value ? parseInt(e.target.value) : null
-                            })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="1985"
-                            min="1900"
-                            max={new Date().getFullYear()}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الشهر</label>
-                        <select
-                            value={formData.recording_month || ""}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                recording_month: e.target.value ? parseInt(e.target.value) : null
-                            })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                        >
-                            <option value="">-</option>
-                            <option value="1">يناير</option>
-                            <option value="2">فبراير</option>
-                            <option value="3">مارس</option>
-                            <option value="4">أبريل</option>
-                            <option value="5">مايو</option>
-                            <option value="6">يونيو</option>
-                            <option value="7">يوليو</option>
-                            <option value="8">أغسطس</option>
-                            <option value="9">سبتمبر</option>
-                            <option value="10">أكتوبر</option>
-                            <option value="11">نوفمبر</option>
-                            <option value="12">ديسمبر</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">اليوم</label>
-                        <select
-                            value={formData.recording_day || ""}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                recording_day: e.target.value ? parseInt(e.target.value) : null
-                            })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                        >
-                            <option value="">-</option>
-                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                <option key={d} value={d}>{d}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الفترة الزمنية</label>
-                        <input
-                            type="text"
-                            list="time-period-suggestions"
-                            value={formData.time_period}
-                            onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="الخمسينيات"
-                        />
-                        <datalist id="time-period-suggestions">
-                            {timePeriodSuggestions.map((s, i) => <option key={i} value={s} />)}
-                        </datalist>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">المدة (دقيقة) *</label>
-                        <input
-                            type="number"
-                            value={formData.duration_seconds ? Math.round(formData.duration_seconds / 60) : ""}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                duration_seconds: e.target.value ? parseInt(e.target.value) * 60 : 0
-                            })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            required
-                            min="0"
-                            placeholder="45"
-                        />
-                    </div>
-                </div>
-
-                {/* Row 3: الناشر والتفاصيل */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الناشر (إهداء من...) - اختياري</label>
-                        <input
-                            type="text"
-                            list="publisher-suggestions"
-                            value={formData.publisher}
-                            onChange={(e) => setFormData({ ...formData, publisher: e.target.value })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="مثال: جمعية المحافظة على القرآن الكريم"
-                        />
-                        <datalist id="publisher-suggestions">
-                            {publisherSuggestions.map((s, i) => <option key={i} value={s} />)}
-                        </datalist>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">تفاصيل التلاوة (اختياري)</label>
-                        <input
-                            type="text"
-                            value={formData.recording_details}
-                            onChange={(e) => setFormData({ ...formData, recording_details: e.target.value })}
-                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
-                            placeholder="أدخل أي معلومات إضافية عن التلاوة..."
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Metadata */}
-                <div className="space-y-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">البيانات التوثيقية</h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">المدينة (المكان)</label>
-                            <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">الفترة الزمنية (السنة الميلادية)</label>
-                            <input
-                                type="text"
-                                value={formData.time_period}
-                                onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
-                                className="w-full p-2 border rounded dark:bg-slate-700"
-                                placeholder="مثال: 1985"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">المدة (ثانية)</label>
-                        <input type="number" value={formData.duration_seconds} onChange={(e) => setFormData({ ...formData, duration_seconds: parseInt(e.target.value) || 0 })} className="w-full p-2 border rounded dark:bg-slate-700" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">التصنيف (الندرة)</label>
-                            <select value={formData.rarity_classification} onChange={(e) => setFormData({ ...formData, rarity_classification: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700">
-                                <option value="common">منتشر (Common)</option>
-                                <option value="less_common">قليل الانتشار</option>
-                                <option value="rare">نادر</option>
-                                <option value="very_rare">نادر جداً</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">الموثوقية (Reliability)</label>
-                            <select value={formData.reliability_level} onChange={(e) => setFormData({ ...formData, reliability_level: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700">
-                                <option value="verified">موثوق (Verified)</option>
-                                <option value="unverified">غير موثوق (Unverified)</option>
-                                <option value="rare">نادر (Rare)</option>
-                                <option value="very_rare">نادر جداً (Very Rare)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Removed duplicate title field - already exists at the top */}
-                </div>
-
-                {/* Source & File */}
-                <div className="space-y-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">المصدر والملف</h3>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Archival ID (اختياري)</label>
-                        <input type="text" value={formData.archival_id} onChange={(e) => setFormData({ ...formData, archival_id: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" placeholder="e.g. MIN-MUR-001..." />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">وصف المصدر</label>
-                        <input type="text" value={formData.source_description} onChange={(e) => setFormData({ ...formData, source_description: e.target.value })} className="w-full p-2 border rounded dark:bg-slate-700" placeholder="e.g. Archive.org item X" />
-                    </div>
-
-                    <div className="space-y-4">
-                        <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-400">الملف الصوتي</label>
+                    {/* أ) معلومات أساسية (القارئ - القسم) */}
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">معلومات أساسية</h3>
 
                         <div className="grid grid-cols-1 gap-4">
-                            <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">رفع من الجهاز</label>
-                                <input
-                                    type="file"
-                                    accept="audio/*"
-                                    onChange={handleAudioUpload}
-                                    disabled={uploading}
-                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
-                                />
-                                {uploading && <p className="text-xs text-blue-500 mt-2 animate-pulse">جاري الرفع...</p>}
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">القارئ *</label>
+                                <select
+                                    required
+                                    value={formData.reciter_id}
+                                    onChange={handleReciterChange}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="">اختر القارئ...</option>
+                                    {reciters.map(r => <option key={r.id} value={r.id}>{r.name_ar}</option>)}
+                                </select>
                             </div>
 
-                            <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">رابط مباشر (URL)</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="url" dir="ltr"
-                                        value={formData.archive_url}
-                                        onChange={(e) => setFormData({ ...formData, archive_url: e.target.value })}
-                                        className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
-                                        placeholder="https://archive.org/download/..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={fetchArchiveMetadata}
-                                        disabled={!formData.archive_url || loading}
-                                        className="whitespace-nowrap px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-sm transition-colors text-slate-700 dark:text-slate-200"
-                                        title="جلب البيانات الوصفية تلقائياً"
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">القسم *</label>
+                                <select
+                                    required
+                                    value={formData.section_id}
+                                    onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="">اختر القسم...</option>
+                                    {sections.map(s => <option key={s.id} value={s.id}>{s.name_ar}</option>)}
+                                </select>
+                            </div>
+
+                            {phases.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الفترة الزمنية للقارئ (اختياري)</label>
+                                    <select
+                                        value={formData.reciter_phase_id}
+                                        onChange={(e) => setFormData({ ...formData, reciter_phase_id: e.target.value })}
+                                        className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
                                     >
-                                        🔍 جلب البيانات
-                                    </button>
+                                        <option value="">بدون تحديد</option>
+                                        {phases.map(p => <option key={p.id} value={p.id}>{p.phase_name_ar}</option>)}
+                                    </select>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ب) معلومات التلاوة (الدولة، المدينة، المكان، التواريخ، الناشر، التفاصيل) */}
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">معلومات التلاوة</h3>
+
+                        {/* الدولة - المدينة (صف واحد) */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الدولة *</label>
+                                <input
+                                    type="text"
+                                    list="city-suggestions"
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                    placeholder="مثال: مصر"
+                                    required
+                                />
+                                <datalist id="city-suggestions">
+                                    {citySuggestions.map((s, i) => <option key={i} value={s} />)}
+                                </datalist>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">المدينة</label>
+                                <input
+                                    type="text"
+                                    placeholder="القاهرة"
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                />
+                                <p className="text-xs text-slate-400 mt-1">اسم المدينة</p>
                             </div>
                         </div>
 
-                        {formData.archive_url && (
-                            <div className="text-xs p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded border border-emerald-100 dark:border-emerald-800 break-all font-mono">
-                                🔗 {formData.archive_url}
+                        {/* المكان التفصيلي - الفترة الزمنية (صف واحد) */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">المكان التفصيلي</label>
+                                <input
+                                    type="text"
+                                    list="venue-suggestions"
+                                    value={formData.venue}
+                                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                    placeholder="مسجد الحسين"
+                                />
+                                <datalist id="venue-suggestions">
+                                    {venueSuggestions.map((s, i) => <option key={i} value={s} />)}
+                                </datalist>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الفترة الزمنية</label>
+                                <input
+                                    type="text"
+                                    list="time-period-suggestions"
+                                    value={formData.time_period}
+                                    onChange={(e) => setFormData({ ...formData, time_period: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                    placeholder="الخمسينيات"
+                                />
+                                <datalist id="time-period-suggestions">
+                                    {timePeriodSuggestions.map((s, i) => <option key={i} value={s} />)}
+                                </datalist>
+                            </div>
+                        </div>
+
+                        {/* السنة - الشهر - اليوم (صف واحد) */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">السنة</label>
+                                <input
+                                    type="number"
+                                    value={formData.recording_year || ""}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        recording_year: e.target.value ? parseInt(e.target.value) : null
+                                    })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                    placeholder="1985"
+                                    min="1900"
+                                    max={new Date().getFullYear()}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الشهر</label>
+                                <select
+                                    value={formData.recording_month || ""}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        recording_month: e.target.value ? parseInt(e.target.value) : null
+                                    })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="">-</option>
+                                    <option value="1">يناير</option>
+                                    <option value="2">فبراير</option>
+                                    <option value="3">مارس</option>
+                                    <option value="4">أبريل</option>
+                                    <option value="5">مايو</option>
+                                    <option value="6">يونيو</option>
+                                    <option value="7">يوليو</option>
+                                    <option value="8">أغسطس</option>
+                                    <option value="9">سبتمبر</option>
+                                    <option value="10">أكتوبر</option>
+                                    <option value="11">نوفمبر</option>
+                                    <option value="12">ديسمبر</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">اليوم</label>
+                                <select
+                                    value={formData.recording_day || ""}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        recording_day: e.target.value ? parseInt(e.target.value) : null
+                                    })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="">-</option>
+                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                        <option key={d} value={d}>{d}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* الناشر (صف واحد) */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الناشر (إهداء من...)</label>
+                            <input
+                                type="text"
+                                list="publisher-suggestions"
+                                value={formData.publisher}
+                                onChange={(e) => setFormData({ ...formData, publisher: e.target.value })}
+                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                placeholder="مثال: جمعية المحافظة على القرآن الكريم"
+                            />
+                            <datalist id="publisher-suggestions">
+                                {publisherSuggestions.map((s, i) => <option key={i} value={s} />)}
+                            </datalist>
+                        </div>
+
+                        {/* تفاصيل التلاوة (صف واحد) */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">تفاصيل التلاوة</label>
+                            <textarea
+                                value={formData.recording_details}
+                                onChange={(e) => setFormData({ ...formData, recording_details: e.target.value })}
+                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                placeholder="أدخل أي معلومات إضافية عن التلاوة..."
+                                rows={2}
+                            />
+                        </div>
+
+                        {/* التصنيف (الندرة) - الموثوقية - الجودة (صف واحد) */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">التصنيف (الندرة)</label>
+                                <select
+                                    value={formData.rarity_classification}
+                                    onChange={(e) => setFormData({ ...formData, rarity_classification: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="common">منتشر (Common)</option>
+                                    <option value="less_common">قليل الانتشار</option>
+                                    <option value="rare">نادر</option>
+                                    <option value="very_rare">نادر جداً</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الموثوقية</label>
+                                <select
+                                    value={formData.reliability_level}
+                                    onChange={(e) => setFormData({ ...formData, reliability_level: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="verified">موثوق (Verified)</option>
+                                    <option value="unverified">غير موثوق</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">الجودة</label>
+                                <select
+                                    value={formData.quality_level}
+                                    onChange={(e) => setFormData({ ...formData, quality_level: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                >
+                                    <option value="">غير محدد</option>
+                                    <option value="high">عالية</option>
+                                    <option value="medium">متوسطة</option>
+                                    <option value="low">منخفضة</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Archive ID (صف واحد) */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Archive ID</label>
+                            <input
+                                type="text"
+                                value={formData.archival_id}
+                                onChange={(e) => setFormData({ ...formData, archival_id: e.target.value })}
+                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600 font-mono text-sm"
+                                placeholder="e.g. MIN-MUR-001"
+                            />
+                        </div>
+
+                        {/* المدة (hidden but needed for logic/validation if required) */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">المدة (دقيقة)</label>
+                            <input
+                                type="number"
+                                value={formData.duration_seconds ? Math.round(formData.duration_seconds / 60) : ""}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    duration_seconds: e.target.value ? parseInt(e.target.value) * 60 : 0
+                                })}
+                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600"
+                                placeholder="45"
+                            />
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* ═══════════════ LEFT COLUMN: الملف الصوتي + المحتوى ═══════════════ */}
+                <div className="space-y-6">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2">الملف الصوتي والمحتوى</h3>
+
+                        {/* الرفع من الجهاز (صف أول) */}
+                        <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">رفع من الجهاز</label>
+                            <input
+                                type="file"
+                                accept="audio/*"
+                                onChange={handleAudioUpload}
+                                disabled={uploading}
+                                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                            />
+                            {uploading && <p className="text-xs text-blue-500 mt-2 animate-pulse">جاري الرفع...</p>}
+                        </div>
+
+                        {/* رابط مباشر (صف ثاني) */}
+                        <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">رابط مباشر (URL)</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="url" dir="ltr"
+                                    value={formData.archive_url}
+                                    onChange={(e) => setFormData({ ...formData, archive_url: e.target.value })}
+                                    className="w-full p-2 border rounded dark:bg-slate-700 text-sm bg-white dark:border-slate-600"
+                                    placeholder="https://archive.org/download/..."
+                                    required={!formData.archive_url && !uploading /* Basic check logic */}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={fetchArchiveMetadata}
+                                    disabled={!formData.archive_url || loading}
+                                    className="whitespace-nowrap px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-sm transition-colors text-slate-700 dark:text-slate-200"
+                                    title="جلب البيانات الوصفية تلقائياً"
+                                >
+                                    🔍 جلب البيانات
+                                </button>
+                            </div>
+                            {formData.archive_url && (
+                                <div className="text-xs p-2 mt-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded border border-emerald-100 dark:border-emerald-800 break-all font-mono">
+                                    🔗 {formData.archive_url}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* الاسم الكامل للتلاوة (صف ثالث) */}
+                        <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                                الاسم الكامل للتلاوة
+                                {contentType === 'general' && <span className="text-red-500 mr-1">*</span>}
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                required={contentType === 'general'}
+                                className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600 placeholder-slate-400 text-sm"
+                                placeholder="مثال: تلاوة سورة الفاتحة - حفص عن عاصم"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                {contentType === 'quran'
+                                    ? 'يظهر هذا الاسم بدلاً من (سورة + رقم)، مع عرض التفاصيل الأصلية كعنوان فرعي.'
+                                    : 'إلزامي للتسجيلات العامة.'}
+                            </p>
+                        </div>
+
+                        <hr className="my-6 border-slate-200 dark:border-slate-700" />
+
+                        {/* Content Type Selection (Moved to Left Column) */}
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">نوع المحتوى</h3>
+                            </div>
+                            <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <button
+                                    type="button"
+                                    onClick={() => setContentType('quran')}
+                                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'quran'
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-bold'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
+                                >
+                                    تلاوة قرآنية
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setContentType('general')}
+                                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${contentType === 'general'
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-bold'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
+                                >
+                                    تسجيل عام
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* المحتوى القرآني (Moved to Left Column) */}
+                        {contentType === 'quran' && (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b pb-2">
+                                    <h3 className="font-bold text-slate-900 dark:text-white">المحتوى القرآني</h3>
+                                    <button
+                                        type="button"
+                                        onClick={addSegment}
+                                        className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full font-bold transition-colors"
+                                    >
+                                        + إضافة مقطع
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {segments.map((seg, idx) => {
+                                        const currentSurah = SURAHS.find(s => s.number === seg.surah) || SURAHS[0];
+                                        const ayahOptions = getAyahOptions(currentSurah.ayahCount);
+
+                                        return (
+                                            <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 relative group">
+                                                {/* Delete Segment */}
+                                                {idx > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeSegment(idx)}
+                                                        className="absolute top-2 left-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full p-1.5 z-10 transition-colors"
+                                                        title="حذف المقطع"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-xs font-bold bg-emerald-500 text-white rounded-full w-5 h-5 flex items-center justify-center shrink-0">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs">مقطع {idx + 1}</h4>
+                                                    </div>
+
+                                                    {/* Surah Selection */}
+                                                    <div>
+                                                        <select
+                                                            value={seg.surah}
+                                                            onChange={(e) => updateSegment(idx, 'surah', parseInt(e.target.value))}
+                                                            className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                        >
+                                                            {SURAHS.map(s => <option key={s.number} value={s.number}>{s.name} ({s.number})</option>)}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Ayah Range */}
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <label className="block text-xs text-slate-500 mb-0.5">من</label>
+                                                            <select
+                                                                value={seg.start}
+                                                                onChange={(e) => updateSegment(idx, 'start', parseInt(e.target.value))}
+                                                                className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                            >
+                                                                {ayahOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-slate-500 mb-0.5">إلى</label>
+                                                            <select
+                                                                value={seg.end}
+                                                                onChange={(e) => updateSegment(idx, 'end', parseInt(e.target.value))}
+                                                                className="w-full p-2 border rounded dark:bg-slate-700 text-sm"
+                                                            >
+                                                                {ayahOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
+                    </div>
+                </div>
+
+            </div>
+
+            {/* ═══════════════ BOTTOM: وصف المصدر ═══════════════ */}
+            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="font-bold text-slate-900 dark:text-white border-b pb-2 mb-4">بيانات المصدر الإضافية</h3>
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">وصف المصدر (Source Description)</label>
+                        <textarea
+                            value={formData.source_description}
+                            onChange={(e) => setFormData({ ...formData, source_description: e.target.value })}
+                            className="w-full p-2 border rounded dark:bg-slate-700 bg-white dark:border-slate-600 h-24"
+                            placeholder="e.g. Reference specific item from Archive.org or source collection details..."
+                        />
                     </div>
                 </div>
             </div>
